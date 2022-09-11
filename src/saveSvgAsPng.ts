@@ -1,6 +1,7 @@
 const xmlNs = 'http://www.w3.org/2000/xmlns/';
 const xhtmlNs = 'http://www.w3.org/1999/xhtml';
 const svgNs = 'http://www.w3.org/2000/svg';
+const xlinkNs = 'http://www.w3.org/1999/xlink';
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [<!ENTITY nbsp "&#160;">]>';
 const urlRegex = /url\(["']?(.+?)["']?\)/;
 const fontFormats: { [key: string]: string; } = {
@@ -12,6 +13,18 @@ const fontFormats: { [key: string]: string; } = {
     sfnt: 'application/font-sfnt',
     svg: 'image/svg+xml'
 };
+
+function ensureAttributeNS(
+    this: void,
+    el: Element,
+    namespace: string | null,
+    qualifiedName: string,
+    value: string
+) {
+    if (!el.getAttribute(qualifiedName)) {
+        el.setAttributeNS(namespace, qualifiedName, value);
+    }
+}
 
 function isElement(
     this: void,
@@ -80,28 +93,6 @@ function getDimension(
         parseInt(clone.style[dim]) ||
         parseInt(window.getComputedStyle(el).getPropertyValue(dim));
     return typeof v === 'undefined' || v === null || isNaN(Number(v)) ? 0 : v;
-};
-
-// TODO: probably merge with below checks to avoid redundant type checks
-function getDimensions(
-    this: void,
-    el: SVGElement,
-    clone: SVGGraphicsElement,
-    width: number | null | undefined,
-    height: number | null | undefined
-) {
-    if (el instanceof SVGSVGElement)
-        return {
-            width: width || getDimension(el, clone, 'width'),
-            height: height || getDimension(el, clone, 'height')
-        };
-    if (el instanceof SVGGraphicsElement) {
-        const { x, y, width, height } = el.getBBox();
-        return {
-            width: x + width,
-            height: y + height
-        };
-    }
 }
 
 function reEncode(
@@ -155,14 +146,18 @@ function detectCssFont(
     // @font-face {
     //   src: local('Abel'), url(https://fonts.gstatic.com/s/abel/v6/UzN-iejR1VoXU2Oc-7LsbvesZW2xOQ-xsNqO47m55DA.woff2);
     // }
-    const match = rule.cssText.match(urlRegex);
-    const url = (match && match[1]) || '';
+    const url = rule.cssText.match(urlRegex)?.[1] || '';
     if (!url || url.match(/^data:/) || url === 'about:blank')
-        return;
-    const fullUrl =
-        url.startsWith('../') ? `${href}/../${url}`
-            : url.startsWith('./') ? `${href}/.${url}`
-                : url;
+        return null;
+
+    let fullUrl: string;
+    if (url.startsWith('../'))
+        fullUrl = `${href}/../${url}`;
+    else if (url.startsWith('./'))
+        fullUrl = `${href}/${url}`;
+    else
+        fullUrl = url;
+
     return {
         text: rule.cssText,
         format: getFontMimeTypeFromUrl(fullUrl),
@@ -175,7 +170,7 @@ function inlineImages(
     el: SVGElement
 ) {
     return Promise.all(Array.from(el.querySelectorAll('image')).map(image => {
-        let href = image.getAttributeNS('http://www.w3.org/1999/xlink', 'href') || image.getAttribute('href');
+        let href = image.getAttributeNS(xlinkNs, 'href') || image.getAttribute('href');
         if (!href) {
             return Promise.resolve(null);
         }
@@ -192,7 +187,7 @@ function inlineImages(
                 canvas.width = img.width;
                 canvas.height = img.height;
                 canvas.getContext('2d')!.drawImage(img, 0, 0);
-                image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', canvas.toDataURL('image/png'));
+                image.setAttributeNS(xlinkNs, 'href', canvas.toDataURL('image/png'));
                 resolve(true);
             };
         });
@@ -347,12 +342,42 @@ function downloadOptions(
         return { popup: window.open() };
 }
 
+function getDimensions(
+    this: void,
+    el: any,
+    w: number | null | undefined,
+    h: number | null | undefined,
+    clone: typeof el
+) {
+    let width: number, height: number;
+    if (el instanceof SVGSVGElement) {
+        return {
+            width: w || getDimension(el, clone, 'width'),
+            height: h || getDimension(el, clone, 'height'),
+            clone
+        };
+    }
+    if (el instanceof SVGGraphicsElement) {
+        if (clone.getAttribute('transform') != null) {
+            clone.setAttribute('transform', clone.getAttribute('transform')?.replace(/translate\(.*?\)/, '') || "");
+        }
+        const svg = document.createElementNS(svgNs, 'svg');
+        svg.appendChild(clone);
+        const bb = el.getBBox();
+        return {
+            width: bb.x + bb.width,
+            height: bb.y + bb.height,
+            clone: svg
+        };
+    }
+    return null;
+}
+
 // TODO: callback to promise
 export function prepareSvg(
     this: void,
     el: SVGGraphicsElement,
-    options: SvgExportOptions,
-    done?: Function
+    options: SvgExportOptions
 ) {
     requireDomNode(el);
     const {
@@ -369,35 +394,19 @@ export function prepareSvg(
         let clone = el.cloneNode(true) as typeof el;
         clone.style.backgroundColor = (options || {}).backgroundColor || el.style.backgroundColor;
 
-        const dim = getDimensions(el, clone, w, h);
+        const dim = getDimensions(el, w, h, clone);
         if (!dim) {
             console.error('Attempted to render non-SVG element', el);
             return;
         }
 
         const { width, height } = dim;
-
-        if (!(el instanceof SVGSVGElement)) {
-            if (el instanceof SVGGraphicsElement) {
-                if (clone.getAttribute('transform') != null) {
-                    clone.setAttribute('transform', clone.getAttribute('transform')?.replace(/translate\(.*?\)/, '') || "");
-                }
-                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                svg.appendChild(clone);
-                clone = svg;
-            }
-            else {
-                console.error('Attempted to render non-SVG element', el);
-                return;
-            }
-        }
+        clone = dim.clone;
 
         clone.setAttribute('version', '1.1');
         clone.setAttribute('viewBox', [left, top, width, height].join(' '));
-        if (!clone.getAttribute('xmlns'))
-            clone.setAttributeNS(xmlNs, 'xmlns', svgNs);
-        if (!clone.getAttribute('xmlns:xlink'))
-            clone.setAttributeNS(xmlNs, 'xmlns:xlink', 'http://www.w3.org/1999/xlink');
+        ensureAttributeNS(clone, xmlNs, 'xmlns', svgNs);
+        ensureAttributeNS(clone, xmlNs, 'xmlns:xlink', xlinkNs);
 
         if (responsive) {
             clone.removeAttribute('width');
@@ -409,18 +418,15 @@ export function prepareSvg(
             clone.setAttribute('height', (height * scale).toString());
         }
 
-        Array.from(clone.querySelectorAll('foreignObject > *')).forEach(foreignObject => {
+        for (const foreignObject of clone.querySelectorAll('foreignObject > *')) {
             foreignObject.setAttributeNS(xmlNs, 'xmlns', foreignObject.tagName === 'svg' ? svgNs : xhtmlNs);
-        });
+        }
 
         if (excludeCss) {
             const outer = document.createElement('div');
             outer.appendChild(clone);
             const src = outer.innerHTML;
-            if (typeof done === 'function')
-                done(src, width, height);
-            else
-                return { src, width, height };
+            return { src, width, height };
         }
         else {
             return inlineCss(el, options).then(css => {
@@ -434,12 +440,9 @@ export function prepareSvg(
 
                 const outer = document.createElement('div');
                 outer.appendChild(clone);
-                const src = outer.innerHTML.replace(/NS\d+:href/gi, 'xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href');
+                const src = outer.innerHTML.replace(/NS\d+:href/gi, `xmlns:xlink="${xlinkNs}" xlink:href`);
 
-                if (typeof done === 'function')
-                    done(src, width, height);
-                else
-                    return { src, width, height };
+                return { src, width, height };
             });
         }
     });
