@@ -1,4 +1,10 @@
-# saveSvgAsPng
+# export-svg
+
+An attempt to modernize save-svg-as-png:
+- Convert to TypeScript
+- Split code for easier maintenance
+- Drop IE support
+- Revision the API
 
 ## Installation
 

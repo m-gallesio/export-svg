@@ -1,6 +1,6 @@
 {
-  "name": "save-svg-as-png",
-  "version": "1.4.17",
+  "name": "export-svg",
+  "version": "2.0.0-alpha1",
   "description": "Convert a browser SVG to PNG or dataUri",
   "main": "lib/saveSvgAsPng.js",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/exupero/saveSvgAsPng"
+    "url": "https://github.com/m-gallesio/export-svg"
   },
   "keywords": [
     "svg",
@@ -18,12 +18,12 @@
     "graphics",
     "images"
   ],
-  "author": "Eric Shull",
+  "author": "Matteo Gallesio, Eric Shull",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/exupero/saveSvgAsPng/issues"
+    "url": "https://github.com/m-gallesio/export-svg/issues"
   },
-  "homepage": "https://github.com/exupero/saveSvgAsPng",
+  "homepage": "https://github.com/m-gallesio/export-svg",
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-es2015": "^6.24.1",
