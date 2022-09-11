@@ -333,7 +333,7 @@ function inlineCss(
     });
 
     return inlineFonts(fontList).then(fontCss => css.join('\n') + fontCss);
-};
+}
 
 function downloadOptions(
     this: void
@@ -448,12 +448,10 @@ export function prepareSvg(
     });
 }
 
-// TODO: callback to Promise
 export function svgAsDataUri(
     this: void,
     el: SVGGraphicsElement,
-    options: SvgExportOptions,
-    done?: Function
+    options: SvgExportOptions
 ) {
     requireDomNode(el);
     return prepareSvg(el, options)
@@ -463,13 +461,10 @@ export function svgAsDataUri(
                 width,
                 height
             } = output || {};
-            const svgXml = `data:image/svg+xml;base64,${window.btoa(reEncode(doctype + src))}`;
-            if (typeof done === 'function') {
-                done(svgXml, width, height);
-            }
-            return svgXml;
+            const uri = `data:image/svg+xml;base64,${window.btoa(reEncode(doctype + src))}`;
+            return { uri, width, height };
         });
-};
+}
 
 export function svgAsPngUri(
     this: void,
@@ -501,7 +496,7 @@ export function svgAsPngUri(
         return Promise.resolve(png);
     };
 
-    return svgAsDataUri(el, options).then(uri => {
+    return svgAsDataUri(el, options).then(({ uri }) => {
         return new Promise((resolve: (value: string) => void, reject) => {
             const image = new Image();
             image.onload = () => convertToPng({
@@ -515,7 +510,7 @@ export function svgAsPngUri(
             image.src = uri;
         });
     });
-};
+}
 
 export function download(
     this: void,
@@ -552,7 +547,7 @@ export function saveSvg(el: Element, name: string, options: SvgExportOptions) {
     const downloadOpts = downloadOptions(); // don't inline, can't be async
     return requireDomNodePromise(el)
         .then(el => svgAsDataUri(el, options || {}))
-        .then(uri => download(name, uri, downloadOpts));
+        .then(({ uri }) => download(name, uri, downloadOpts));
 }
 
 export function saveSvgAsPng(this: void, el: Element, name: string, options: SvgExportOptions) {
