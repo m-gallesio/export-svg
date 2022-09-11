@@ -6,6 +6,10 @@ An attempt to modernize save-svg-as-png:
 - Drop IE support
 - Revision the API
 
+Enhancements:
+- handle multiple font urls
+- handle crossorigin stylesheets
+
 ## Installation
 
 ```

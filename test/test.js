@@ -1,24 +1,24 @@
-var test = require('tape');
+const test = require('tape');
 
 test('Is loadable using requirejs', function (assert) {
-	var requirejs = require('requirejs');
-	requirejs(['./saveSvgAsPng'], function(saveSvgAsPng) {
-		assert.ok(saveSvgAsPng, 'Loads saveSvgAsPng module.');
+	const requirejs = require('requirejs');
+	requirejs(['../build/exportSvg'], function(exportSvg) {
+		assert.ok(exportSvg, 'Loads exportSvg module.');
 
-		var contract = {
+		const contract = {
 			'svgAsDataUri': 'function',
 			'svgAsPngUri': 'function',
-			'saveSvgAsPng': 'function',
+			'exportSvg': 'function',
 			'download': 'function',
 			'prepareSvg': 'function',
 			'saveSvg': 'function',
 		};
 
-		for (var property in saveSvgAsPng) {
-			if (saveSvgAsPng.hasOwnProperty(property)) {
-				var expectedType = contract[property];
-				var message = 'Has ' + property + ' of type ' + expectedType;
-				assert.equals(typeof saveSvgAsPng[property], expectedType, message);	
+		for (const property in exportSvg) {
+			if (exportSvg.hasOwnProperty(property)) {
+				const expectedType = contract[property];
+				const message = 'Has ' + property + ' of type ' + expectedType;
+				assert.equals(typeof exportSvg[property], expectedType, message);	
 			}
 		}
 
