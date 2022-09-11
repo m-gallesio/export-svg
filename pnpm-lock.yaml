@@ -6,14 +6,16 @@ specifiers:
   rollup: ^2.79.0
   rollup-plugin-terser: ^7.0.2
   tape: ^4.2.2
+  tslib: ^2.4.0
   typescript: ^4.8.3
 
 devDependencies:
-  '@rollup/plugin-typescript': 8.5.0_ihkqvyh37tzxtjmovjyy2yrv7m
+  '@rollup/plugin-typescript': 8.5.0_tznp6w7csbjledp5nresoxoky4
   requirejs: 2.3.6
   rollup: 2.79.0
   rollup-plugin-terser: 7.0.2_rollup@2.79.0
   tape: 4.16.0
+  tslib: 2.4.0
   typescript: 4.8.3
 
 packages:
@@ -76,7 +78,7 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.14
     dev: true
 
-  /@rollup/plugin-typescript/8.5.0_ihkqvyh37tzxtjmovjyy2yrv7m:
+  /@rollup/plugin-typescript/8.5.0_tznp6w7csbjledp5nresoxoky4:
     resolution: {integrity: sha512-wMv1/scv0m/rXx21wD2IsBbJFba8wGF3ErJIr6IKRfRj49S85Lszbxb4DCo8iILpluTjk2GAAu9CoZt4G3ppgQ==}
     engines: {node: '>=8.0.0'}
     peerDependencies:
@@ -90,6 +92,7 @@ packages:
       '@rollup/pluginutils': 3.1.0_rollup@2.79.0
       resolve: 1.22.1
       rollup: 2.79.0
+      tslib: 2.4.0
       typescript: 4.8.3
     dev: true
 
@@ -698,6 +701,10 @@ packages:
 
   /through/2.3.8:
     resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
+    dev: true
+
+  /tslib/2.4.0:
+    resolution: {integrity: sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==}
     dev: true
 
   /typescript/4.8.3:
