@@ -181,7 +181,6 @@ function inlineImages(
             const canvas = document.createElement('canvas');
             const img = new Image();
             img.crossOrigin = 'anonymous';
-            img.src = href || "";
             img.onerror = () => reject(new Error(`Could not load ${href}`));
             img.onload = () => {
                 canvas.width = img.width;
@@ -190,6 +189,7 @@ function inlineImages(
                 image.setAttributeNS(xlinkNs, 'href', canvas.toDataURL('image/png'));
                 resolve(true);
             };
+            img.src = href || '';
         });
     }));
 }
@@ -256,33 +256,39 @@ function styleSheetRules(this: void) {
     });
 }
 
-declare interface SvgExportOptions {
-    /// Creates a PNG with the given background color. Defaults to transparent.
-    backgroundColor?: string;
+interface CanvasEncoderOptions {
     /// A Number between 0 and 1 indicating image quality. The default is 0.8
     encoderOptions?: number;
     /// A DOMString indicating the image format. The default type is image/png.
     encoderType?: string;
+}
+
+interface CssOptions {
     /// Exclude all CSS rules
     excludeCss?: boolean;
     /// Exclude CSS rules that don't match any elements in the SVG.
     excludeUnusedCss?: boolean;
     /// A list of `{text, url, format}` objects the specify what fonts to inline in the SVG. Omitting this option defaults to auto-detecting font rules.
     fonts?: FontQueueElement[];
-    /// Specify the image's height. Defaults to the viewbox's height if given, or the element's non-percentage height, or the element's bounding box's height, or the element's CSS height, or the computed style's height, or 0.
-    height?: number;
-    /// Specify the viewbox's left position. Defaults to 0.
-    left?: number;
     /// A function that takes a CSS rule's selector and properties and returns a string of CSS. Supercedes `selectorRemap` and `modifyStyle`. Useful for modifying properties only for certain CSS selectors.
     modifyCss?(s: string): string;
     /// A function that takes a CSS rule's properties and returns a string of CSS. Useful for modifying properties before they're inlined into the SVG.
     modifyStyle?(s: string): string;
+    /// A function that takes a CSS selector and produces its replacement in the CSS that's inlined into the SVG. Useful if your SVG style selectors are scoped by ancestor elements in your HTML document.
+    selectorRemap?(s: string): string;
+}
+
+interface SvgExportOptions extends CanvasEncoderOptions, CssOptions {
+    /// Creates a PNG with the given background color. Defaults to transparent.
+    backgroundColor?: string;
+    /// Specify the image's height. Defaults to the viewbox's height if given, or the element's non-percentage height, or the element's bounding box's height, or the element's CSS height, or the computed style's height, or 0.
+    height?: number;
+    /// Specify the viewbox's left position. Defaults to 0.
+    left?: number;
     /// TODO
     responsive?: boolean;
     /// Changes the resolution of the output PNG. Defaults to `1`, the same dimensions as the source SVG.
     scale?: number;
-    /// A function that takes a CSS selector and produces its replacement in the CSS that's inlined into the SVG. Useful if your SVG style selectors are scoped by ancestor elements in your HTML document.
-    selectorRemap?(s: string): string;
     /// Specify the viewbox's top position. Defaults to 0.
     top?: number;
     /// Specify the image's width. Defaults to the viewbox's width if given, or the element's non-percentage width, or the element's bounding box's width, or the element's CSS width, or the computed style's width, or 0.
@@ -292,7 +298,7 @@ declare interface SvgExportOptions {
 function inlineCss(
     this: void,
     el: Element,
-    options: SvgExportOptions
+    options: CssOptions
 ) {
     const {
         selectorRemap,
@@ -309,37 +315,34 @@ function inlineCss(
     const css: string[] = [];
     const detectFonts = typeof fonts === 'undefined';
     const fontList = fonts || [];
-    styleSheetRules().forEach(({ rules, href }) => {
+
+    for (const { rules, href } of styleSheetRules()) {
         if (!rules)
-            return;
-        // TODO: split rule types
-        Array.from(rules).forEach(r => {
+            continue;
+        // TODO:
+        // - split rule types
+        // - do something for @media rules
+        for (const r of rules) {
             const rule = r as CSSStyleRule;
-            if (typeof rule.style != 'undefined') {
-                if (query(el, rule.selectorText)) {
-                    css.push(generateCss(rule.selectorText, rule.style.cssText));
-                }
-                else if (detectFonts && rule.cssText.match(/^@font-face/)) {
-                    const font = detectCssFont(rule, href);
-                    if (font) {
-                        fontList.push(font);
-                    }
-                }
-                else if (!excludeUnusedCss) {
-                    css.push(rule.cssText);
+            if (!rule.style)
+                continue;
+
+            if (query(el, rule.selectorText)) {
+                css.push(generateCss(rule.selectorText, rule.style.cssText));
+            }
+            else if (detectFonts && rule.cssText.match(/^@font-face/)) {
+                const font = detectCssFont(rule, href);
+                if (font) {
+                    fontList.push(font);
                 }
             }
-        });
-    });
+            else if (!excludeUnusedCss) {
+                css.push(rule.cssText);
+            }
+        }
+    }
 
     return inlineFonts(fontList).then(fontCss => css.join('\n') + fontCss);
-}
-
-function downloadOptions(
-    this: void
-) {
-    if (!('download' in document.createElement('a')))
-        return { popup: window.open() };
 }
 
 function getDimensions(
@@ -349,7 +352,6 @@ function getDimensions(
     h: number | null | undefined,
     clone: typeof el
 ) {
-    let width: number, height: number;
     if (el instanceof SVGSVGElement) {
         return {
             width: w || getDimension(el, clone, 'width'),
@@ -373,26 +375,35 @@ function getDimensions(
     return null;
 }
 
-// TODO: callback to promise
-export function prepareSvg(
+function createStylesheet(
+    this: void,
+    css: string
+) {
+    const style = document.createElement('style');
+    style.setAttribute('type', 'text/css');
+    style.innerHTML = `<![CDATA[\n${css}\n]]>`;
+    return style;
+}
+
+function prepareSvg(
     this: void,
     el: SVGGraphicsElement,
     options: SvgExportOptions
 ) {
-    requireDomNode(el);
     const {
         left = 0,
         top = 0,
         width: w,
         height: h,
         scale = 1,
+        backgroundColor,
         responsive = false,
         excludeCss = false,
     } = options || {};
 
     return inlineImages(el).then(() => {
         let clone = el.cloneNode(true) as typeof el;
-        clone.style.backgroundColor = (options || {}).backgroundColor || el.style.backgroundColor;
+        clone.style.backgroundColor = backgroundColor || el.style.backgroundColor;
 
         const dim = getDimensions(el, w, h, clone);
         if (!dim) {
@@ -426,25 +437,23 @@ export function prepareSvg(
             const outer = document.createElement('div');
             outer.appendChild(clone);
             const src = outer.innerHTML;
+
             return { src, width, height };
         }
-        else {
-            return inlineCss(el, options).then(css => {
-                const style = document.createElement('style');
-                style.setAttribute('type', 'text/css');
-                style.innerHTML = `<![CDATA[\n${css}\n]]>`;
 
-                const defs = document.createElement('defs');
-                defs.appendChild(style);
-                clone.insertBefore(defs, clone.firstChild);
+        return inlineCss(el, options).then(css => {
+            const style = createStylesheet(css);
 
-                const outer = document.createElement('div');
-                outer.appendChild(clone);
-                const src = outer.innerHTML.replace(/NS\d+:href/gi, `xmlns:xlink="${xlinkNs}" xlink:href`);
+            const defs = document.createElement('defs');
+            defs.appendChild(style);
+            clone.insertBefore(defs, clone.firstChild);
 
-                return { src, width, height };
-            });
-        }
+            const outer = document.createElement('div');
+            outer.appendChild(clone);
+            const src = outer.innerHTML.replace(/NS\d+:href/gi, `xmlns:xlink="${xlinkNs}" xlink:href`);
+
+            return { src, width, height };
+        });
     });
 }
 
@@ -455,7 +464,7 @@ export function svgAsDataUri(
 ) {
     requireDomNode(el);
     return prepareSvg(el, options)
-        .then((output: { src: string, width: number, height: number; } | null | undefined) => {
+        .then(output => {
             const {
                 src,
                 width,
@@ -466,44 +475,48 @@ export function svgAsDataUri(
         });
 }
 
-export function svgAsPngUri(
+interface ImageData {
+    uri: string;
+    width?: number;
+    height?: number;
+}
+
+function toRasterDataUrl(
     this: void,
-    el: SVGGraphicsElement,
-    options: SvgExportOptions,
-    done?: Function
+    src: HTMLImageElement,
+    options: CanvasEncoderOptions
 ) {
-    requireDomNode(el);
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d')!;
+    const pixelRatio = window.devicePixelRatio || 1;
+
+    canvas.width = src.width * pixelRatio;
+    canvas.height = src.height * pixelRatio;
+    canvas.style.width = `${canvas.width}px`;
+    canvas.style.height = `${canvas.height}px`;
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    context.drawImage(src, 0, 0);
+
     const {
         encoderType = 'image/png',
         encoderOptions = 0.8
     } = options || {};
+    const uri = canvas.toDataURL(encoderType, encoderOptions);
+    return { uri, width: canvas.width, height: canvas.height };
+};
 
-    const convertToPng = ({ src, width, height }: { src: CanvasImageSource; width: number; height: number; }) => {
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d')!;
-        const pixelRatio = window.devicePixelRatio || 1;
-
-        canvas.width = width * pixelRatio;
-        canvas.height = height * pixelRatio;
-        canvas.style.width = `${canvas.width}px`;
-        canvas.style.height = `${canvas.height}px`;
-        context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-        context.drawImage(src, 0, 0);
-
-        const png = canvas.toDataURL(encoderType, encoderOptions);
-        if (typeof done === 'function')
-            done(png, canvas.width, canvas.height);
-        return Promise.resolve(png);
-    };
-
+export function svgAsPngUri(
+    this: void,
+    el: SVGGraphicsElement,
+    options: SvgExportOptions
+) {
+    requireDomNode(el);
     return svgAsDataUri(el, options).then(({ uri }) => {
-        return new Promise((resolve: (value: string) => void, reject) => {
+        return new Promise((resolve: (value: ImageData) => void, reject) => {
             const image = new Image();
-            image.onload = () => convertToPng({
-                src: image,
-                width: image.width,
-                height: image.height
-            }).then(resolve);
+            image.onload = () => {
+                resolve(toRasterDataUrl(image, options));
+            };
             image.onerror = () => {
                 reject(`There was an error loading the data URI as an image on the following SVG\n${window.atob(uri.slice(26))}Open the following link to see browser's diagnosis\n${uri}`);
             };
@@ -543,16 +556,36 @@ export function download(
     }
 }
 
-export function saveSvg(el: Element, name: string, options: SvgExportOptions) {
-    const downloadOpts = downloadOptions(); // don't inline, can't be async
+function exportAndDownload(
+    this: void,
+    el: Element,
+    name: string,
+    options: SvgExportOptions,
+    generate: (this: void, el: SVGGraphicsElement, options: SvgExportOptions) => Promise<ImageData>
+) {
+    // don't inline, can't be async
+    const downloadOptions = 'download' in document.createElement('a')
+        ? void 0
+        : { popup: window.open() };
     return requireDomNodePromise(el)
-        .then(el => svgAsDataUri(el, options || {}))
-        .then(({ uri }) => download(name, uri, downloadOpts));
+        .then(el => generate(el, options || {}))
+        .then(({ uri }) => download(name, uri, downloadOptions));
 }
 
-export function saveSvgAsPng(this: void, el: Element, name: string, options: SvgExportOptions) {
-    const downloadOpts = downloadOptions(); // don't inline, can't be async
-    return requireDomNodePromise(el)
-        .then(el => svgAsPngUri(el, options || {}))
-        .then(uri => download(name, uri, downloadOpts));
+export function saveSvg(
+    this: void,
+    el: Element,
+    name: string,
+    options: SvgExportOptions
+) {
+    return exportAndDownload(el, name, options, svgAsDataUri);
+}
+
+export function saveSvgAsPng(
+    this: void,
+    el: Element,
+    name: string,
+    options: SvgExportOptions
+) {
+    return exportAndDownload(el, name, options, svgAsPngUri);
 }
