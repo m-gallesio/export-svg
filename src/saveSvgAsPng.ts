@@ -430,7 +430,7 @@ function prepareSvg(
         }
 
         for (const foreignObject of clone.querySelectorAll('foreignObject > *')) {
-            foreignObject.setAttributeNS(xmlNs, 'xmlns', foreignObject.tagName === 'svg' ? svgNs : xhtmlNs);
+            ensureAttributeNS(foreignObject, xmlNs, 'xmlns', foreignObject.tagName === 'svg' ? svgNs : xhtmlNs);
         }
 
         if (excludeCss) {
@@ -525,11 +525,10 @@ export function svgAsPngUri(
     });
 }
 
-export function download(
+function download(
     this: void,
     name: string,
-    uri: string,
-    options?: { popup?: Window | null; }
+    uri: string
 ) {
     const saveLink = document.createElement('a');
     if ('download' in saveLink) {
@@ -550,9 +549,10 @@ export function download(
         saveLink.click();
         document.body.removeChild(saveLink);
     }
-    else if (options && options.popup) {
-        options.popup.document.title = name;
-        options.popup.location.replace(uri);
+    else {
+        const popup = window.open()!;
+        popup.document.title = name;
+        popup.location.replace(uri);
     }
 }
 
@@ -563,13 +563,9 @@ function exportAndDownload(
     options: SvgExportOptions,
     generate: (this: void, el: SVGGraphicsElement, options: SvgExportOptions) => Promise<ImageData>
 ) {
-    // don't inline, can't be async
-    const downloadOptions = 'download' in document.createElement('a')
-        ? void 0
-        : { popup: window.open() };
     return requireDomNodePromise(el)
         .then(el => generate(el, options || {}))
-        .then(({ uri }) => download(name, uri, downloadOptions));
+        .then(({ uri }) => download(name, uri));
 }
 
 export function saveSvg(

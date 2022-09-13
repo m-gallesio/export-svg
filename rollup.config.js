@@ -6,13 +6,15 @@ import config from "./package.json";
 
 rmSync("./dist", { force: true, recursive: true });
 
+const name = "exportSvg";
+
 export default [{
     input: "src/exportSvg.ts",
     output: [
         {
             file: config.main,
             format: "umd",
-            name: config.name
+            name
         },
         {
             file: config.module,
@@ -22,13 +24,13 @@ export default [{
         {
             file: `${config.main.replace('.js', '')}.min.js`,
             format: "umd",
-            name: config.name,
+            name,
             plugins: [terser()]
         },
         {
             file: `${config.module.replace('.js', '')}.min.js`,
             format: "es",
-            name: "export-svg",
+            name: config.name,
             plugins: [terser()]
         }
     ],
