@@ -68,14 +68,13 @@ function arrayBufferToBase64(
 function getDimension(
     this: void,
     el: SVGSVGElement,
-    clone: SVGGraphicsElement,
     dim: "width" | "height"
 ) {
     const v =
         (el.viewBox && el.viewBox.baseVal && el.viewBox.baseVal[dim]) ||
-        (clone.getAttribute(dim) !== null && !clone.getAttribute(dim)!.match(/%$/) && parseInt(clone.getAttribute(dim)!)) ||
+        (el.getAttribute(dim) && !el.getAttribute(dim)!.match(/%$/) && parseInt(el.getAttribute(dim)!)) ||
         el.getBoundingClientRect()[dim] ||
-        parseInt(clone.style[dim]) ||
+        parseInt(el.style[dim]) ||
         parseInt(window.getComputedStyle(el).getPropertyValue(dim));
     return typeof v === 'undefined' || v === null || isNaN(Number(v)) ? 0 : v;
 }
@@ -283,7 +282,7 @@ function inlineCss(
         return `${sel}{${props}}\n`;
     });
     const css: string[] = [];
-    const detectFonts = typeof fonts === 'undefined';
+    const detectFonts = !Boolean(fonts);
     const fontList = fonts || [];
 
     for (const { rules, href } of styleSheetRules()) {
@@ -317,21 +316,21 @@ function inlineCss(
 
 function getDimensions(
     this: void,
-    el: any,
+    el: SVGElement,
     w: number | null | undefined,
     h: number | null | undefined,
     clone: typeof el
 ) {
     if (el instanceof SVGSVGElement) {
         return {
-            width: w || getDimension(el, clone, 'width'),
-            height: h || getDimension(el, clone, 'height'),
-            clone
+            width: w || getDimension(el, 'width'),
+            height: h || getDimension(el, 'height'),
+            clone: clone as SVGSVGElement
         };
     }
     if (el instanceof SVGGraphicsElement) {
-        if (clone.getAttribute('transform') != null) {
-            clone.setAttribute('transform', clone.getAttribute('transform')?.replace(/translate\(.*?\)/, '') || "");
+        if (clone.hasAttribute('transform')) {
+            clone.setAttribute('transform', clone.getAttribute('transform')!.replace(/translate\(.*?\)/, ''));
         }
         const svg = document.createElementNS(svgNs, 'svg');
         svg.appendChild(clone);
@@ -372,7 +371,7 @@ function prepareSvg(
     } = options || {};
 
     return inlineImages(el).then(() => {
-        let clone = el.cloneNode(true) as typeof el;
+        let clone = el.cloneNode(true) as typeof el | SVGElement;
         clone.style.backgroundColor = backgroundColor || el.style.backgroundColor;
 
         const dim = getDimensions(el, w, h, clone);
