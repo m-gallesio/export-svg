@@ -26,27 +26,12 @@ function ensureAttributeNS(
     }
 }
 
-function isElement(
-    this: void,
-    obj: any
-) {
-    return obj instanceof HTMLElement || obj instanceof SVGElement;
-}
-
-function requireDomNode(
+function ensureDomNode(
     this: void,
     el: any
-) {
-    if (!isElement(el))
-        throw new Error(`an HTMLElement or SVGElement is required; got ${el}`);
-}
-
-function requireDomNodePromise(
-    this: void,
-    el: any
-) {
-    return isElement(el)
-        ? Promise.resolve(el)
+): Promise<typeof el extends HTMLElement | SVGElement ? void : never> {
+    return el instanceof HTMLElement || el instanceof SVGElement
+        ? Promise.resolve()
         : Promise.reject(new Error(`an HTMLElement or SVGElement is required; got ${el}`));
 }
 
@@ -106,20 +91,6 @@ function reEncode(
                 return c === '%' ? '%25' : c;
             })
     );
-}
-
-function uriToBlob(
-    this: void,
-    uri: string
-) {
-    const byteString = window.atob(uri.split(',')[1]);
-    const mimeString = uri.split(',')[0].split(':')[1].split(';')[0];
-    const buffer = new ArrayBuffer(byteString.length);
-    const intArray = new Uint8Array(buffer);
-    for (let i = 0; i < byteString.length; i++) {
-        intArray[i] = byteString.charCodeAt(i);
-    }
-    return new Blob([buffer], { type: mimeString });
 }
 
 function query(
@@ -206,34 +177,33 @@ function inlineFonts(
     fonts: FontQueueElement[]
 ) {
     return Promise.all(
-        fonts.map(font =>
-            new Promise((resolve, reject) => {
-                if (cachedFonts[font.url])
-                    return resolve(cachedFonts[font.url]);
+        fonts.map(font => new Promise(resolve => {
+            if (cachedFonts[font.url])
+                return resolve(cachedFonts[font.url]);
 
-                // TODO fetch
-                const req = new XMLHttpRequest();
-                req.addEventListener('load', () => {
-                    // TODO: it may also be worth it to wait until fonts are fully loaded before
-                    // attempting to rasterize them. (e.g. use https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet)
-                    const fontInBase64 = arrayBufferToBase64(req.response);
-                    const fontUri = font.text.replace(urlRegex, `url("data:${font.format};base64,${fontInBase64}")`) + '\n';
-                    cachedFonts[font.url] = fontUri;
-                    resolve(fontUri);
-                });
-                req.addEventListener('error', e => {
-                    console.warn(`Failed to load font from: ${font.url}`, e);
-                    cachedFonts[font.url] = null;
-                    resolve(null);
-                });
-                req.addEventListener('abort', e => {
-                    console.warn(`Aborted loading font from: ${font.url}`, e);
-                    resolve(null);
-                });
-                req.open('GET', font.url);
-                req.responseType = 'arraybuffer';
-                req.send();
-            })
+            // TODO fetch
+            const req = new XMLHttpRequest();
+            req.addEventListener('load', () => {
+                // TODO: it may also be worth it to wait until fonts are fully loaded before
+                // attempting to rasterize them. (e.g. use https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet)
+                const fontInBase64 = arrayBufferToBase64(req.response);
+                const fontUri = font.text.replace(urlRegex, `url("data:${font.format};base64,${fontInBase64}")`) + '\n';
+                cachedFonts[font.url] = fontUri;
+                resolve(fontUri);
+            });
+            req.addEventListener('error', e => {
+                console.warn(`Failed to load font from: ${font.url}`, e);
+                cachedFonts[font.url] = null;
+                resolve(null);
+            });
+            req.addEventListener('abort', e => {
+                console.warn(`Aborted loading font from: ${font.url}`, e);
+                resolve(null);
+            });
+            req.open('GET', font.url);
+            req.responseType = 'arraybuffer';
+            req.send();
+        })
         )
     ).then(fontCss => fontCss.filter(x => x).join(''));
 }
@@ -462,8 +432,8 @@ export function svgAsDataUri(
     el: SVGGraphicsElement,
     options: SvgExportOptions
 ) {
-    requireDomNode(el);
-    return prepareSvg(el, options)
+    return ensureDomNode(el)
+        .then(() => prepareSvg(el, options))
         .then(output => {
             const {
                 src,
@@ -510,19 +480,20 @@ export function svgAsPngUri(
     el: SVGGraphicsElement,
     options: SvgExportOptions
 ) {
-    requireDomNode(el);
-    return svgAsDataUri(el, options).then(({ uri }) => {
-        return new Promise((resolve: (value: ImageData) => void, reject) => {
-            const image = new Image();
-            image.onload = () => {
-                resolve(toRasterDataUrl(image, options));
-            };
-            image.onerror = () => {
-                reject(`There was an error loading the data URI as an image on the following SVG\n${window.atob(uri.slice(26))}Open the following link to see browser's diagnosis\n${uri}`);
-            };
-            image.src = uri;
+    return ensureDomNode(el)
+        .then(() => svgAsDataUri(el, options))
+        .then(({ uri }) => {
+            return new Promise((resolve: (value: ImageData) => void, reject) => {
+                const image = new Image();
+                image.onload = () => {
+                    resolve(toRasterDataUrl(image, options));
+                };
+                image.onerror = () => {
+                    reject(`There was an error loading the data URI as an image on the following SVG\n${window.atob(uri.slice(26))}Open the following link to see browser's diagnosis\n${uri}`);
+                };
+                image.src = uri;
+            });
         });
-    });
 }
 
 function download(
@@ -535,19 +506,22 @@ function download(
         saveLink.download = name;
         saveLink.style.display = 'none';
         document.body.appendChild(saveLink);
-        try {
-            const blob = uriToBlob(uri);
-            const url = URL.createObjectURL(blob);
-            saveLink.href = url;
-            saveLink.onclick = () => requestAnimationFrame(() => URL.revokeObjectURL(url));
-        }
-        catch (e) {
-            console.error(e);
-            console.warn('Error while getting object URL. Falling back to string URL.');
-            saveLink.href = uri;
-        }
-        saveLink.click();
-        document.body.removeChild(saveLink);
+        fetch(uri)
+            .then(data => data.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                saveLink.href = url;
+                saveLink.onclick = () => requestAnimationFrame(() => URL.revokeObjectURL(url));
+            })
+            .catch(e => {
+                console.error(e);
+                console.warn('Error while getting object URL. Falling back to string URL.');
+                saveLink.href = uri;
+            })
+            .then(() => {
+                saveLink.click();
+                document.body.removeChild(saveLink);
+            });
     }
     else {
         const popup = window.open()!;
@@ -558,19 +532,19 @@ function download(
 
 function exportAndDownload(
     this: void,
-    el: Element,
+    el: SVGGraphicsElement,
     name: string,
     options: SvgExportOptions,
     generate: (this: void, el: SVGGraphicsElement, options: SvgExportOptions) => Promise<ImageData>
 ) {
-    return requireDomNodePromise(el)
-        .then(el => generate(el, options || {}))
+    return ensureDomNode(el)
+        .then(() => generate(el, options || {}))
         .then(({ uri }) => download(name, uri));
 }
 
 export function saveSvg(
     this: void,
-    el: Element,
+    el: SVGGraphicsElement,
     name: string,
     options: SvgExportOptions
 ) {
@@ -579,7 +553,7 @@ export function saveSvg(
 
 export function saveSvgAsPng(
     this: void,
-    el: Element,
+    el: SVGGraphicsElement,
     name: string,
     options: SvgExportOptions
 ) {
