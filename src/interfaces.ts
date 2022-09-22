@@ -1,4 +1,4 @@
-export interface FontQueueElement {
+export interface FontInfo {
     text: string;
     format: string;
     url: string;
@@ -17,7 +17,7 @@ export interface CssOptions {
     /// Exclude CSS rules that don't match any elements in the SVG.
     excludeUnusedCss?: boolean;
     /// A list of `{text, url, format}` objects the specify what fonts to inline in the SVG. Omitting this option defaults to auto-detecting font rules.
-    fonts?: FontQueueElement[];
+    fonts?: FontInfo[];
     /// A function that takes a CSS rule's selector and properties and returns a string of CSS. Supercedes `selectorRemap` and `modifyStyle`. Useful for modifying properties only for certain CSS selectors.
     modifyCss?(s: string): string;
     /// A function that takes a CSS rule's properties and returns a string of CSS. Useful for modifying properties before they're inlined into the SVG.
@@ -41,4 +41,11 @@ export interface SvgExportOptions extends CanvasEncoderOptions, CssOptions {
     top?: number;
     /// Specify the image's width. Defaults to the viewbox's width if given, or the element's non-percentage width, or the element's bounding box's width, or the element's CSS width, or the computed style's width, or 0.
     width?: number;
+}
+
+export interface RenderedImageInfo {
+    /// The rendered image as a data URI
+    uri: string;
+    width?: number;
+    height?: number;
 }

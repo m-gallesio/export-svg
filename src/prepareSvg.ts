@@ -97,6 +97,8 @@ function ensureAttributeNS(
     }
 }
 
+/** @internal */
+
 export function prepareSvg(
     this: void,
     el: SVGGraphicsElement,

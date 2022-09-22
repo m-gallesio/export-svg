@@ -4,7 +4,9 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "allowJs": false,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "stripInternal": true,
+    "declaration": true
   },
   "include": [
     "src/**/*"

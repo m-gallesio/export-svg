@@ -1,4 +1,4 @@
-import type { CssOptions, FontQueueElement } from "./interfaces";
+import type { CssOptions, FontInfo } from "./interfaces";
 
 const urlRegex = /url\(["']?(.+?)["']?\)/;
 const fontFormats: { [key: string]: string; } = {
@@ -81,7 +81,7 @@ function detectCssFont(
 const cachedFonts: { [key: string]: string | null; } = {};
 function inlineFonts(
     this: void,
-    fonts: FontQueueElement[]
+    fonts: FontInfo[]
 ) {
     return Promise.all(
         fonts.map(font => new Promise(resolve => {
@@ -133,6 +133,8 @@ function styleSheetRules(this: void) {
     });
 }
 
+/** @internal */
+
 export function inlineCss(
     this: void,
     el: Element,
@@ -183,6 +185,8 @@ export function inlineCss(
     return inlineFonts(fontList).then(fontCss => css.join('\n') + fontCss);
 }
 
+/** @internal */
+
 export function createStylesheet(
     this: void,
     css: string
@@ -192,4 +196,3 @@ export function createStylesheet(
     style.innerHTML = `<![CDATA[\n${css}\n]]>`;
     return style;
 }
-

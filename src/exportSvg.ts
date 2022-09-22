@@ -1,4 +1,4 @@
-import type { CanvasEncoderOptions, SvgExportOptions } from "./interfaces";
+import type { CanvasEncoderOptions, RenderedImageInfo, SvgExportOptions } from "./interfaces";
 import { prepareSvg } from "./prepareSvg";
 
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [<!ENTITY nbsp "&#160;">]>';
@@ -43,12 +43,6 @@ export function svgAsDataUri(
         });
 }
 
-interface ImageData {
-    uri: string;
-    width?: number;
-    height?: number;
-}
-
 function toRasterDataUrl(
     this: void,
     src: HTMLImageElement,
@@ -81,7 +75,7 @@ export function svgAsPngUri(
     return ensureDomNode(el)
         .then(() => svgAsDataUri(el, options))
         .then(({ uri }) => {
-            return new Promise((resolve: (value: ImageData) => void, reject) => {
+            return new Promise((resolve: (value: RenderedImageInfo) => void, reject) => {
                 const image = new Image();
                 image.onload = () => {
                     resolve(toRasterDataUrl(image, options));
@@ -133,7 +127,7 @@ function exportAndDownload(
     el: SVGGraphicsElement,
     name: string,
     options: SvgExportOptions,
-    generate: (this: void, el: SVGGraphicsElement, options: SvgExportOptions) => Promise<ImageData>
+    generate: (this: void, el: SVGGraphicsElement, options: SvgExportOptions) => Promise<RenderedImageInfo>
 ) {
     return ensureDomNode(el)
         .then(() => generate(el, options || {}))
