@@ -10,6 +10,10 @@ Enhancements:
 - handle multiple font urls
 - handle crossorigin stylesheets
 
+TODO:
+- more export types, e.g. blob
+- hook to post-process canvas
+
 ## Installation
 
 ```
@@ -18,7 +22,10 @@ npm install save-svg-as-png
 
 ## Prerequisites
 
-SaveSvgAsPng relies on JavaScript promises, so any browsers that don't natively support the standard `Promise` object will need to have a polyfill.
+In general, a ES6-compatible browser is required.
+In particular, the following APIs are expected:
+- `fetch`
+- `Promise`
 
 ## Usage
 
@@ -52,12 +59,9 @@ svgAsPngUri(document.getElementById("diagram"), options).then(uri => ...);
 
 Compatible with [browserify](http://browserify.org/) and [requirejs](http://requirejs.org).
 
-If you want to use TypeScript, necessary [type definitions](https://github.com/martianov/typed-save-svg-as-png) are available in [Typings](https://github.com/typings/typings) [public registry](https://github.com/typings/registry).
-
 ### Options
 
 - `backgroundColor` — Creates a PNG with the given background color. Defaults to transparent.
-- `canvg` - If canvg is passed in, it will be used to write svg to canvas. This will allow support for Internet Explorer
 - `encoderOptions` - A Number between 0 and 1 indicating image quality. The default is 0.8
 - `encoderType` - A DOMString indicating the image format. The default type is image/png.
 - `fonts` - A list of `{text, url, format}` objects the specify what fonts to inline in the SVG. Omitting this option defaults to auto-detecting font rules.
@@ -81,6 +85,4 @@ npm test
 
 ## Support
 
-[Chrome limits data URIs to 2MB](http://stackoverflow.com/questions/695151/data-protocol-url-size-limitations/41755526#41755526), so you may have trouble generating PNGs beyod a certain size.
-
-Internet Explorer will only work if [canvg](https://github.com/canvg/canvg) is passed in, otherwise it will throw a `SecurityError` when calling `toDataURL` on a canvas that's been written to. [canvg](https://github.com/canvg/canvg) may have it's own issues with SVG support, so make sure to test the output.
+[Chrome limits data URIs to 2MB](http://stackoverflow.com/questions/695151/data-protocol-url-size-limitations/41755526#41755526), so you may have trouble generating PNGs beyond a certain size.

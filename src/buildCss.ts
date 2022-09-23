@@ -26,7 +26,7 @@ function getFontMimeTypeFromUrl(
 
 function arrayBufferToBase64(
     this: void,
-    buffer: Iterable<number>
+    buffer: ArrayBufferLike
 ) {
     let binary = '';
     const bytes = new Uint8Array(buffer);
@@ -52,14 +52,14 @@ function query(
 
 function detectCssFont(
     this: void,
-    rule: CSSStyleRule,
+    cssText: string,
     href: string | null | undefined
-) {
+): FontInfo | null | undefined {
     // Match CSS font-face rules to external links.
     // @font-face {
     //   src: local('Abel'), url(https://fonts.gstatic.com/s/abel/v6/UzN-iejR1VoXU2Oc-7LsbvesZW2xOQ-xsNqO47m55DA.woff2);
     // }
-    const url = rule.cssText.match(urlRegex)?.[1] || '';
+    const url = cssText.match(urlRegex)?.[1] || '';
     if (!url || url.match(/^data:/) || url === 'about:blank')
         return null;
 
@@ -72,65 +72,70 @@ function detectCssFont(
         fullUrl = url;
 
     return {
-        text: rule.cssText,
+        text: cssText,
         format: getFontMimeTypeFromUrl(fullUrl),
         url: fullUrl
     };
 }
 
 const cachedFonts: { [key: string]: string | null; } = {};
+
+function loadFont(
+    this: void,
+    font: FontInfo
+) {
+    if (cachedFonts[font.url])
+        return Promise.resolve(cachedFonts[font.url]);
+
+    return fetch(font.url)
+        .then(response => response.ok ? response.arrayBuffer() : Promise.reject())
+        .then(responseContent => {
+            // TODO: it may also be worth it to wait until fonts are fully loaded before
+            // attempting to rasterize them. (e.g. use https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet)
+            const fontInBase64 = arrayBufferToBase64(responseContent);
+            const fontUri = font.text.replace(urlRegex, `url("data:${font.format};base64,${fontInBase64}")`) + '\n';
+            cachedFonts[font.url] = fontUri;
+            return fontUri;
+        })
+        .catch(e => {
+            console.warn(`Failed to load font from: ${font.url}`, e);
+            cachedFonts[font.url] ||= '';
+            return '';
+        })
+        .then(() => cachedFonts[font.url]);
+}
+
 function inlineFonts(
     this: void,
     fonts: FontInfo[]
 ) {
-    return Promise.all(
-        fonts.map(font => new Promise(resolve => {
-            if (cachedFonts[font.url])
-                return resolve(cachedFonts[font.url]);
-
-            // TODO fetch
-            const req = new XMLHttpRequest();
-            req.addEventListener('load', () => {
-                // TODO: it may also be worth it to wait until fonts are fully loaded before
-                // attempting to rasterize them. (e.g. use https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet)
-                const fontInBase64 = arrayBufferToBase64(req.response);
-                const fontUri = font.text.replace(urlRegex, `url("data:${font.format};base64,${fontInBase64}")`) + '\n';
-                cachedFonts[font.url] = fontUri;
-                resolve(fontUri);
-            });
-            req.addEventListener('error', e => {
-                console.warn(`Failed to load font from: ${font.url}`, e);
-                cachedFonts[font.url] = null;
-                resolve(null);
-            });
-            req.addEventListener('abort', e => {
-                console.warn(`Aborted loading font from: ${font.url}`, e);
-                resolve(null);
-            });
-            req.open('GET', font.url);
-            req.responseType = 'arraybuffer';
-            req.send();
-        })
-        )
-    ).then(fontCss => fontCss.filter(x => x).join(''));
+    return Promise
+        .all(fonts.map(loadFont))
+        .then(fontCss => fontCss.join(''));
 }
 
-interface CssRuleDefinition {
+interface LoadedCssStyleSheet {
     rules?: CSSRuleList;
     href?: string | null;
 }
 
-let cachedRules: CssRuleDefinition[] | null | undefined = null;
-function styleSheetRules(this: void) {
-    return cachedRules ||= Array.from(document.styleSheets).map(sheet => {
-        try {
-            return { rules: sheet.cssRules, href: sheet.href };
+let cachedRules: LoadedCssStyleSheet[] | null | undefined = null;
+function styleSheetRules(
+    this: void
+) {
+    if (!cachedRules) {
+        const rules: LoadedCssStyleSheet[] = [];
+        for (const sheet of document.styleSheets) {
+            try {
+                rules.push({ rules: sheet.cssRules, href: sheet.href });
+            }
+            catch (e) {
+                console.warn(`Stylesheet could not be loaded: ${sheet.href}`, e);
+            }
         }
-        catch (e) {
-            console.warn(`Stylesheet could not be loaded: ${sheet.href}`, e);
-            return {};
-        }
-    });
+        cachedRules = rules;
+    }
+    return cachedRules;
 }
 
 /** @internal */
@@ -166,12 +171,12 @@ export function inlineCss(
             const rule = r as CSSStyleRule;
             if (!rule.style)
                 continue;
-
+                
             if (query(el, rule.selectorText)) {
                 css.push(generateCss(rule.selectorText, rule.style.cssText));
             }
             else if (detectFonts && rule.cssText.match(/^@font-face/)) {
-                const font = detectCssFont(rule, href);
+                const font = detectCssFont(rule.cssText, href);
                 if (font) {
                     fontList.push(font);
                 }

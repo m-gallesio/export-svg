@@ -6,7 +6,8 @@
     "allowJs": false,
     "esModuleInterop": true,
     "stripInternal": true,
-    "declaration": true
+    "declaration": true,
+    "noImplicitReturns": true,
   },
   "include": [
     "src/**/*"

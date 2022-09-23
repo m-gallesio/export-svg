@@ -19,11 +19,11 @@ export interface CssOptions {
     /// A list of `{text, url, format}` objects the specify what fonts to inline in the SVG. Omitting this option defaults to auto-detecting font rules.
     fonts?: FontInfo[];
     /// A function that takes a CSS rule's selector and properties and returns a string of CSS. Supercedes `selectorRemap` and `modifyStyle`. Useful for modifying properties only for certain CSS selectors.
-    modifyCss?(s: string): string;
+    modifyCss?(selector: string, properties:string): string;
     /// A function that takes a CSS rule's properties and returns a string of CSS. Useful for modifying properties before they're inlined into the SVG.
-    modifyStyle?(s: string): string;
+    modifyStyle?(properties: string): string;
     /// A function that takes a CSS selector and produces its replacement in the CSS that's inlined into the SVG. Useful if your SVG style selectors are scoped by ancestor elements in your HTML document.
-    selectorRemap?(s: string): string;
+    selectorRemap?(selector: string): string;
 }
 
 export interface SvgExportOptions extends CanvasEncoderOptions, CssOptions {
