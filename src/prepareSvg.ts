@@ -1,4 +1,4 @@
-import { createStylesheet, inlineCss } from "./buildCss";
+import { createStylesheet, inlineCss } from "./inlineStyle";
 import type { SvgExportOptions } from "./interfaces";
 
 const xmlNs = 'http://www.w3.org/2000/xmlns/';
@@ -7,9 +7,9 @@ const svgNs = 'http://www.w3.org/2000/svg';
 const xlinkNs = 'http://www.w3.org/1999/xlink';
 
 function isExternal(
-    url: string
-) {
-    return url && url.lastIndexOf('http', 0) === 0 && url.lastIndexOf(window.location.host) === -1;
+    url: string | null | undefined
+): url is string {
+    return Boolean(url && url.lastIndexOf('http', 0) === 0 && url.lastIndexOf(window.location.host) === -1);
 }
 
 function inlineImages(
@@ -17,7 +17,7 @@ function inlineImages(
     el: SVGElement
 ) {
     return Promise.all(Array.from(el.querySelectorAll('image')).map(image => {
-        let href = image.getAttributeNS(xlinkNs, 'href') || image.getAttribute('href');
+        let href = image.getAttributeNS(xlinkNs, 'href') || image.getAttribute('href') || '';
         if (!href) {
             return Promise.resolve(null);
         }
@@ -36,7 +36,7 @@ function inlineImages(
                 image.setAttributeNS(xlinkNs, 'href', canvas.toDataURL('image/png'));
                 resolve(true);
             };
-            img.src = href || '';
+            img.src = href;
         });
     }));
 }
