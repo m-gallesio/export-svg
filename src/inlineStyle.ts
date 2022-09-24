@@ -1,22 +1,6 @@
 import { detectCssFont, inlineFonts } from "./inlineFonts";
 import type { CssOptions, FontInfo } from "./interfaces";
 
-function query(
-    this: void,
-    el: Element,
-    selector: string
-) {
-    if (selector) {
-        try {
-            return el.querySelector(selector) || el.parentNode?.querySelector(selector);
-        }
-        catch (err) {
-            console.warn(`Invalid CSS selector "${selector}"`, err);
-        }
-    }
-    return null;
-}
-
 interface LoadedCssStyleSheet {
     rules: CSSRuleList;
     href: string | null | undefined;
@@ -43,6 +27,22 @@ function styleSheetRules(
     return cachedRules;
 }
 
+function query(
+    this: void,
+    el: Element,
+    selector: string
+) {
+    if (selector) {
+        try {
+            return el.querySelector(selector) || el.parentNode?.querySelector(selector);
+        }
+        catch (err) {
+            console.warn(`Invalid CSS selector "${selector}"`, err);
+        }
+    }
+    return null;
+}
+
 function processCssRule(
     this: void,
     rule: CSSStyleRule,
@@ -63,21 +63,88 @@ function processCssRule(
 function processCssFontFaceRule(
     this: void,
     rule: CSSFontFaceRule,
+    detectFonts: boolean,
     href: string | null | undefined,
     fontList: FontInfo[]
 ) {
-    const font = detectCssFont(rule.cssText, href);
-    if (font) {
-        fontList.push(font);
+    if (detectFonts) {
+        const font = detectCssFont(rule.cssText, href);
+        if (font) {
+            fontList.push(font);
+        }
     }
     return true;
+}
+
+interface CssLoadingAccumulator {
+    css: string[],
+    fonts: FontInfo[];
+}
+
+interface CssLoadingOptions {
+    generateCss: (selector: string, properties: string) => string,
+    detectFonts: boolean,
+    excludeUnusedCss: boolean | null | undefined;
 }
 
 function processCssMediaRule(
     this: void,
     rule: CSSMediaRule,
+    el: Element,
+    href: string | null | undefined,
+    accumulator: CssLoadingAccumulator,
+    options: CssLoadingOptions
 ) {
-    // TODO recurse
+    if (window.matchMedia(rule.conditionText).matches) {
+        processRuleList(rule.cssRules, href, el, accumulator, options);
+    }
+    return true;
+}
+
+function processCssSupportsRule(
+    this: void,
+    rule: CSSSupportsRule,
+    el: Element,
+    href: string | null | undefined,
+    accumulator: CssLoadingAccumulator,
+    options: CssLoadingOptions
+) {
+    if ('supports' in CSS && CSS.supports(rule.conditionText)) {
+        processRuleList(rule.cssRules, href, el, accumulator, options);
+    }
+    return true;
+}
+
+function processRuleList(
+    this: void,
+    rules: CSSRuleList,
+    href: string | null | undefined,
+    el: Element,
+    accumulator: CssLoadingAccumulator,
+    options: CssLoadingOptions
+) {
+    for (const rule of rules) {
+        let isProcessed = false;
+        if (rule instanceof CSSStyleRule) {
+            isProcessed = processCssRule(rule, el, options.generateCss, accumulator.css);
+        }
+        else if (rule instanceof CSSFontFaceRule) {
+            isProcessed = processCssFontFaceRule(rule, options.detectFonts, href, accumulator.fonts);
+        }
+        else if (rule instanceof CSSMediaRule) {
+            isProcessed = processCssMediaRule(rule, el, href, accumulator, options);
+        }
+        else if (rule instanceof CSSSupportsRule) {
+            isProcessed = processCssSupportsRule(rule, el, href, accumulator, options);
+        }
+        else if (rule instanceof CSSImportRule) {
+            // TODO
+        }
+
+        if (!isProcessed && !options.excludeUnusedCss) {
+            accumulator.css.push(rule.cssText);
+        }
+    }
 }
 
 /** @internal */
@@ -94,46 +161,27 @@ export function inlineCss(
         fonts,
         excludeUnusedCss
     } = options || {};
-    const generateCss = modifyCss || ((selector: string, properties: string) => {
-        const sel = selectorRemap ? selectorRemap(selector) : selector;
-        const props = modifyStyle ? modifyStyle(properties) : properties;
-        return `${sel}{${props}}\n`;
-    });
-    const css: string[] = [];
-    const detectFonts = !Boolean(fonts);
-    const fontList = fonts || [];
+
+    const acc: CssLoadingAccumulator = {
+        css: [] as string[],
+        fonts: fonts || []
+    };
+
+    const opts: CssLoadingOptions = {
+        generateCss: modifyCss || ((selector: string, properties: string) => {
+            const sel = selectorRemap ? selectorRemap(selector) : selector;
+            const props = modifyStyle ? modifyStyle(properties) : properties;
+            return `${sel}{${props}}\n`;
+        }),
+        excludeUnusedCss,
+        detectFonts: !Boolean(fonts)
+    };
 
     for (const { rules, href } of styleSheetRules()) {
-        // TODO:
-        // - split rule types
-        // - do something for @media rules
-        for (const rule of rules) {
-            let isProcessed = false;
-            if (rule instanceof CSSStyleRule) {
-                isProcessed = processCssRule(rule, el, generateCss, css);
-            }
-            else if (rule instanceof CSSFontFaceRule) {
-                if (detectFonts)
-                    processCssFontFaceRule(rule, href, fontList);
-                isProcessed = true;
-            }
-            else if (rule instanceof CSSMediaRule) {
-                // TODO
-            }
-            else if (rule instanceof CSSSupportsRule) {
-                // TODO
-            }
-            else if (rule instanceof CSSImportRule) {
-                // TODO
-            }
-
-            if (!isProcessed && !excludeUnusedCss) {
-                css.push(rule.cssText);
-            }
-        }
+        processRuleList(rules, href, el, acc, opts);
     }
 
-    return inlineFonts(fontList).then(fontCss => css.join('\n') + fontCss);
+    return inlineFonts(acc.fonts).then(fontCss => acc.css.join('\n') + fontCss);
 }
 
 /** @internal */
