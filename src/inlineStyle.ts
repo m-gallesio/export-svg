@@ -2,29 +2,60 @@ import { detectCssFont, inlineFonts } from "./inlineFonts";
 import type { CssOptions, FontInfo } from "./interfaces";
 
 interface LoadedCssStyleSheet {
-    rules: CSSRuleList;
+    rules: CSSRuleList | CSSRule[];
     href: string | null | undefined;
 }
 
-let cachedRules: LoadedCssStyleSheet[] | null | undefined = null;
-function styleSheetRules(
+function loadRemoteStyleSheet(
+    this: void,
+    href: string
+) {
+    return fetch(href)
+        .then(response => response.text())
+        .then(contents => {
+            // needs to be in the DOM to be read
+            const element = document.body.appendChild(createStylesheet(contents));
+            let loadedStyle: LoadedCssStyleSheet | null = null;
+            if (element.sheet && element.sheet.cssRules) {
+                loadedStyle = { rules: Array.from(element.sheet.cssRules), href };
+            }
+            element.remove();
+            return loadedStyle;
+        })
+        .catch(e => {
+            console.warn(`Stylesheet could not be loaded: ${href}`, e);
+            return null;
+        });
+}
+
+let styleCache: LoadedCssStyleSheet[] | null | undefined = null;
+async function getStyleSheets(
     this: void
 ) {
-    if (!cachedRules) {
-        const rules: LoadedCssStyleSheet[] = [];
-        for (const sheet of document.styleSheets) {
-            try {
-                if (sheet.cssRules)
-                    rules.push({ rules: sheet.cssRules, href: sheet.href });
-                // TODO: manual remote loading
-            }
-            catch (e) {
-                console.warn(`Stylesheet could not be loaded: ${sheet.href}`, e);
-            }
+    if (styleCache)
+        return styleCache;
+
+    const rules: LoadedCssStyleSheet[] = [];
+
+    for (const sheet of document.styleSheets) {
+        if (sheet.media && !window.matchMedia(sheet.media.toString()).matches)
+            continue;
+        try {
+            if (sheet.cssRules)
+                rules.push({ rules: sheet.cssRules, href: sheet.href });
         }
-        cachedRules = rules;
+        catch (e) {
+            if (sheet.href) {
+                const r = await loadRemoteStyleSheet(sheet.href);
+                if (r)
+                    rules.push(r);
+            }
+            else
+                console.warn(`Stylesheet could not be loaded: ${sheet.href}`, e);
+        }
     }
-    return cachedRules;
+    styleCache = rules;
+    return styleCache;
 }
 
 function query(
@@ -117,7 +148,7 @@ function processCssSupportsRule(
 
 function processRuleList(
     this: void,
-    rules: CSSRuleList,
+    rules: CSSRuleList | CSSRule[],
     href: string | null | undefined,
     el: Element,
     accumulator: CssLoadingAccumulator,
@@ -177,11 +208,13 @@ export function inlineCss(
         detectFonts: !Boolean(fonts)
     };
 
-    for (const { rules, href } of styleSheetRules()) {
-        processRuleList(rules, href, el, acc, opts);
-    }
-
-    return inlineFonts(acc.fonts).then(fontCss => acc.css.join('\n') + fontCss);
+    return getStyleSheets()
+        .then(styles => {
+            for (const { rules, href } of styles) {
+                processRuleList(rules, href, el, acc, opts);
+            }
+            return inlineFonts(acc.fonts).then(fontCss => acc.css.join('\n') + fontCss);
+        });
 }
 
 /** @internal */
@@ -192,6 +225,6 @@ export function createStylesheet(
 ) {
     const style = document.createElement('style');
     style.setAttribute('type', 'text/css');
-    style.innerHTML = `<![CDATA[\n${css}\n]]>`;
+    style.innerHTML = css;
     return style;
 }

@@ -24,6 +24,9 @@ document.getElementById('file').addEventListener('change', function handleFileSe
 
 function inlineTest(title, selector, saveOptions, testOptions) {
     const element = document.querySelector(selector);
+    if (!element)
+        return;
+
     const svg = element.innerHTML;
     const template = document.getElementById('inline-template').innerHTML;
     element.innerHTML = template;

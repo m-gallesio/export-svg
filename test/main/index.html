@@ -103,11 +103,9 @@
         </div>
     </template>
 
-    <!-- Needed to trigger correct custom font rasterization in Chrome -->
-    <span style="font-family: 'Stalemate';color:white">A</span>
     <h1>exportSvg</h1>
     <p>This page tests various features of exportSvg.</p>
-    <p>You can test your own SVG code in the Sandbox. If something doesn't work as expected, you can <a href="https://github.com/exupero/exportSvg/issues">file an issue on GitHub</a>.</p>
+    <p>You can test your own SVG code in the Sandbox. If something doesn't work as expected, you can <a href="https://github.com/m-gallesio/exportSvg/issues">file an issue on GitHub</a>.</p>
 
     <ul>
         <li id="sandbox">
@@ -338,8 +336,6 @@
                     Custom fonts are supported but in a very rudimentary way.<br />
                     Note: if you don't see the demo working, click "Save as PNG" - it should work.
                 </p>
-                <p>Make sure that the custom font is applied to a non-svg element first. This will help browser to rasterize SVG correctly onto canvas.</p>
-                <p>@font-face declaration has to be inside document stylesheets (not in the external `link` tag)</p>
                 <p>Only first `url()` is inlined into svg (don't have multiple urls in the font-face).</p>
             </div>
         </li>
@@ -348,9 +344,6 @@
             <svg width="200" height="200">
                 <text x="100" y="100" text-anchor="middle" dy="14" style="font-family:'Sacramento';font-size:36pt;">Custom Fonts</text>
             </svg>
-            <div style="color:red;">
-                TODO
-            </div>
         </li>
     </ul>
 

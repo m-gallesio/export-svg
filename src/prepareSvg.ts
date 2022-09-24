@@ -156,7 +156,7 @@ export function prepareSvg(
         }
 
         return inlineCss(el, options).then(css => {
-            const style = createStylesheet(css);
+            const style = createStylesheet(`<![CDATA[\n${css}\n]]>`);
 
             const defs = document.createElement('defs');
             defs.appendChild(style);
