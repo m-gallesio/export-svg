@@ -1,4 +1,4 @@
-import type { FontInfo } from "./interfaces";
+import type { FontInfo } from "../interfaces";
 
 const urlRegex = /url\(["']?(.+?)["']?\)/;
 const fontFormats: { [key: string]: string; } = {

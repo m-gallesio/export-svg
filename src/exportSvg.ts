@@ -1,5 +1,5 @@
 import type { CanvasEncoderOptions, RenderedImageInfo, SvgExportOptions } from "./interfaces";
-import { prepareSvg } from "./prepareSvg";
+import { buildSvg } from "./buildSvg";
 
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [<!ENTITY nbsp "&#160;">]>';
 
@@ -31,7 +31,7 @@ export function svgAsDataUri(
     options: SvgExportOptions
 ) {
     return ensureDomNode(el)
-        .then(() => prepareSvg(el, options))
+        .then(() => buildSvg(el, options))
         .then(output => {
             const {
                 src,
