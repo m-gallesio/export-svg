@@ -28,34 +28,37 @@ function loadRemoteStyleSheet(
         });
 }
 
+function loadStyleSheetRules(
+    this: void,
+    sheet: CSSStyleSheet
+) {
+    try {
+        if (sheet.cssRules)
+            return Promise.resolve({ rules: sheet.cssRules, href: sheet.href });
+    }
+    catch (e) {
+        if (sheet.href) {
+            return loadRemoteStyleSheet(sheet.href);
+        }
+        console.warn(`Stylesheet could not be loaded: ${sheet.href}`, e);
+    }
+    return Promise.resolve(null);
+}
+
 let styleCache: LoadedCssStyleSheet[] | null | undefined = null;
-async function getStyleSheets(
+function getStyleSheets(
     this: void
 ) {
-    if (styleCache)
-        return styleCache;
-
-    const rules: LoadedCssStyleSheet[] = [];
-
-    for (const sheet of document.styleSheets) {
-        if (sheet.media && !window.matchMedia(sheet.media.toString()).matches)
-            continue;
-        try {
-            if (sheet.cssRules)
-                rules.push({ rules: sheet.cssRules, href: sheet.href });
-        }
-        catch (e) {
-            if (sheet.href) {
-                const r = await loadRemoteStyleSheet(sheet.href);
-                if (r)
-                    rules.push(r);
-            }
-            else
-                console.warn(`Stylesheet could not be loaded: ${sheet.href}`, e);
-        }
-    }
-    styleCache = rules;
-    return styleCache;
+    return styleCache
+        ? Promise.resolve(styleCache)
+        : Promise
+            .all(Array.from(document.styleSheets)
+                .filter(sheet => !sheet.media || window.matchMedia(sheet.media.toString()).matches)
+                .map(loadStyleSheetRules))
+            .then(all => {
+                styleCache = all.filter(x => x) as LoadedCssStyleSheet[];
+                return styleCache;
+            });
 }
 
 function query(
@@ -213,8 +216,9 @@ export function inlineCss(
             for (const { rules, href } of styles) {
                 processRuleList(rules, href, el, acc, opts);
             }
-            return inlineFonts(acc.fonts).then(fontCss => acc.css.join('\n') + fontCss);
-        });
+        })
+        .then(() => inlineFonts(acc.fonts))
+        .then(fontCss => acc.css.join('\n') + fontCss);
 }
 
 /** @internal */
