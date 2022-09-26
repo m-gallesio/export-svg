@@ -91,6 +91,7 @@ inlineTest('SVG within SVG', '#svg-in-svg');
 inlineTest('excluding unused CSS', '#exclude-unused-css', { excludeUnusedCss: true });
 inlineTest('With custom fonts', '#custom-font');
 inlineTest('With custom fonts (crossorigin CSS)', '#custom-font-crossorigin-css');
+inlineTest('With @import css', '#import-css');
 
 const sandbox = document.getElementById('sandbox');
 

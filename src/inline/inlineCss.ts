@@ -1,6 +1,6 @@
 import { detectCssFont, inlineFonts } from "./inlineFonts";
 import type { CssOptions, FontInfo } from "../interfaces";
-import { getStyleSheets } from "./styleSheetCache";
+import { getStyleSheets, loadRemoteStyleSheet } from "./styleSheetCache";
 
 function query(
     this: void,
@@ -90,7 +90,27 @@ function processCssSupportsRule(
     return true;
 }
 
-function processRuleList(
+async function processCssImportRule(
+    this: void,
+    rule: CSSImportRule,
+    el: Element,
+    accumulator: CssLoadingAccumulator,
+    options: CssLoadingOptions
+) {
+    if (!rule.media.length || Array.from(rule.media).some(medium => window.matchMedia(medium).matches)) {
+        try {
+            const style = await loadRemoteStyleSheet(rule.href);
+            if (style)
+                await processRuleList(style.rules, rule.href, el, accumulator, options);
+        }
+        catch (err) {
+            console.warn(`Could not load @imported stylesheet from "${rule.href}"`, err);
+        }
+    }
+    return true;
+}
+
+async function processRuleList(
     this: void,
     rules: CSSRuleList | CSSRule[],
     href: string | null | undefined,
@@ -113,7 +133,7 @@ function processRuleList(
             isProcessed = processCssSupportsRule(rule, el, href, accumulator, options);
         }
         else if (rule instanceof CSSImportRule) {
-            // TODO
+            isProcessed = await processCssImportRule(rule, el, accumulator, options);
         }
 
         if (!isProcessed && !options.excludeUnusedCss) {
@@ -153,9 +173,9 @@ export function inlineCss(
     };
 
     return getStyleSheets()
-        .then(styles => {
+        .then(async styles => {
             for (const { rules, href } of styles) {
-                processRuleList(rules, href, el, acc, opts);
+                await processRuleList(rules, href, el, acc, opts);
             }
         })
         .then(() => inlineFonts(acc.fonts))

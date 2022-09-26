@@ -3,7 +3,9 @@ interface LoadedCssStyleSheet {
     href: string | null | undefined;
 }
 
-function loadRemoteStyleSheet(
+/** @internal */
+
+export function loadRemoteStyleSheet(
     this: void,
     href: string
 ) {
