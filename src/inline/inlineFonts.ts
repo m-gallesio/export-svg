@@ -40,7 +40,8 @@ function arrayBufferToBase64(
 export function detectCssFont(
     this: void,
     cssText: string,
-    href: string | null | undefined
+    href: string | null | undefined,
+    inlineAllFonts: boolean
 ): FontInfo | null | undefined {
     // Match CSS font-face rules to external links.
     // @font-face {
