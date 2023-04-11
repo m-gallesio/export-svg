@@ -1,10 +1,10 @@
 import typescript from "@rollup/plugin-typescript";
-import { terser } from "rollup-plugin-terser";
+import terser from "@rollup/plugin-terser";
 import { rmSync } from "fs";
 
-import config from "./package.json";
+import config from "../package.json" assert { type: "json" };
 
-rmSync("./dist", { force: true, recursive: true });
+rmSync("../dist", { force: true, recursive: true });
 
 const name = "exportSvg";
 

@@ -38,12 +38,12 @@ function processCssRule(
 function processCssFontFaceRule(
     this: void,
     rule: CSSFontFaceRule,
-    detectFonts: boolean,
     href: string | null | undefined,
-    fontList: FontInfo[]
+    fontList: FontInfo[],
+    options: CssFontLoadingOptions
 ) {
-    if (detectFonts) {
-        const font = detectCssFont(rule.cssText, href);
+    if (options.detectFonts) {
+        const font = detectCssFont(rule.cssText, href, options.inlineAllFonts);
         if (font) {
             fontList.push(font);
         }
@@ -56,10 +56,14 @@ interface CssLoadingAccumulator {
     fonts: FontInfo[];
 }
 
-interface CssLoadingOptions {
-    generateCss: (selector: string, properties: string) => string,
-    detectFonts: boolean,
-    excludeUnusedCss: boolean | null | undefined;
+interface CssFontLoadingOptions {
+    detectFonts: boolean;
+    inlineAllFonts: boolean;
+}
+
+interface CssLoadingOptions extends CssFontLoadingOptions {
+    generateCss: (selector: string, properties: string) => string;
+    excludeUnusedCss: boolean;
 }
 
 function processCssMediaRule(
@@ -124,7 +128,7 @@ async function processRuleList(
             isProcessed = processCssRule(rule, el, options.generateCss, accumulator.css);
         }
         else if (rule instanceof CSSFontFaceRule) {
-            isProcessed = processCssFontFaceRule(rule, options.detectFonts, href, accumulator.fonts);
+            isProcessed = processCssFontFaceRule(rule, href, accumulator.fonts, options);
         }
         else if (rule instanceof CSSMediaRule) {
             isProcessed = processCssMediaRule(rule, el, href, accumulator, options);
@@ -154,7 +158,8 @@ export function inlineCss(
         modifyStyle,
         modifyCss,
         fonts,
-        excludeUnusedCss
+        inlineAllFonts = false,
+        excludeUnusedCss = false
     } = options || {};
 
     const acc: CssLoadingAccumulator = {
@@ -169,7 +174,8 @@ export function inlineCss(
             return `${sel}{${props}}\n`;
         }),
         excludeUnusedCss,
-        detectFonts: !Boolean(fonts)
+        detectFonts: !Boolean(fonts),
+        inlineAllFonts
     };
 
     return getStyleSheets()
