@@ -63,18 +63,42 @@ function renderSvgToCanvas(
     return canvas;
 }
 
-function toRasterDataUrl(
+async function toRaster<TResult>(
     this: void,
     src: HTMLImageElement,
-    options: CanvasEncoderOptions
-): RenderedImageInfo<string> {
+    options: CanvasEncoderOptions,
+    getData: (canvas: HTMLCanvasElement, type: string, quality: number) => TResult | Promise<TResult>
+): Promise<RenderedImageInfo<TResult>> {
     const canvas = renderSvgToCanvas(src, options.canvasSettings);
     const {
         type = 'image/png',
         quality = 0.8
     } = options || {};
-    const data = canvas.toDataURL(type, quality);
-    return { data, width: canvas.width, height: canvas.height };
+    return {
+        data: await getData(canvas, type, quality),
+        width: canvas.width,
+        height: canvas.height
+    }
+}
+
+async function renderToResult<TResult>(
+    this: void,
+    el: SVGGraphicsElement,
+    options: SvgExportOptions,
+    render: (image: HTMLImageElement, options: SvgExportOptions) => RenderedImageInfo<TResult> | Promise<RenderedImageInfo<TResult>>
+) {
+    ensureDomNode(el);
+    const { data } = await svgAsDataUri(el, options);
+    return new Promise((resolve: (value: RenderedImageInfo<TResult>) => void, reject) => {
+        const image = new Image();
+        image.onload = async () => {
+            resolve(await render(image, options));
+        };
+        image.onerror = () => {
+            reject(`Error loading SVG data uri as image:\n${window.atob(data.slice(26))}Open the following link to see browser's diagnosis\n${data}`);
+        };
+        image.src = data;
+    });
 }
 
 /** @internal */
@@ -84,16 +108,27 @@ export async function svgAsPngUri(
     el: SVGGraphicsElement,
     options: SvgExportOptions
 ) {
-    ensureDomNode(el);
-    const { data } = await svgAsDataUri(el, options);
-    return new Promise((resolve: (value: RenderedImageInfo<string>) => void, reject) => {
-        const image = new Image();
-        image.onload = () => {
-            resolve(toRasterDataUrl(image, options));
-        };
-        image.onerror = () => {
-            reject(`Error loading SVG data uri as image:\n${window.atob(data.slice(26))}Open the following link to see browser's diagnosis\n${data}`);
-        };
-        image.src = data;
-    });
+    return renderToResult(el, options, (src, options) => toRaster(
+        src,
+        options,
+        (canvas, type, quality) => canvas.toDataURL(type, quality)
+    ));
+}
+
+/** @internal */
+
+export async function svgAsPngBlob(
+    this: void,
+    el: SVGGraphicsElement,
+    options: SvgExportOptions
+) {
+    return renderToResult(el, options, (src, options) => toRaster(
+        src,
+        options,
+        (canvas, type, quality) => new Promise((resolve: (value: Blob) => void, reject) => {
+            canvas.toBlob(blob => blob
+                ? resolve(blob)
+                : reject(`Error converting SVG data URI to blob`), type, quality);
+        })
+    ));
 }

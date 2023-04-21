@@ -1,5 +1,5 @@
 import type { RenderedImageInfo, SvgExportOptions } from "./interfaces";
-import { ensureDomNode, svgAsDataUri, svgAsPngUri } from "./exportSvg";
+import { ensureDomNode, svgAsDataUri, svgAsPngUri } from "./render";
 
 async function download(
     this: void,
