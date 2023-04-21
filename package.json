@@ -12,8 +12,8 @@
     "export"
   ],
   "type": "module",
-  "main": "dist/export-svg.js",
-  "module": "dist/export-svg.esm.js",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.0",
     "@rollup/plugin-typescript": "^11.1.0",

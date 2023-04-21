@@ -3,7 +3,9 @@ import { buildSvg } from "./buildSvg";
 
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [<!ENTITY nbsp "&#160;">]>';
 
-function ensureDomNode(
+/** @internal */
+
+export function ensureDomNode(
     this: void,
     el: any
 ): typeof el extends HTMLElement | SVGElement ? void : never {
@@ -23,6 +25,8 @@ function reEncode(
             })
     );
 }
+
+/** @internal */
 
 export async function svgAsDataUri(
     this: void,
@@ -73,6 +77,8 @@ function toRasterDataUrl(
     return { data, width: canvas.width, height: canvas.height };
 }
 
+/** @internal */
+
 export async function svgAsPngUri(
     this: void,
     el: SVGGraphicsElement,
@@ -90,59 +96,4 @@ export async function svgAsPngUri(
         };
         image.src = data;
     });
-}
-
-async function download(
-    this: void,
-    name: string,
-    uri: string
-) {
-    const saveLink = document.createElement('a');
-    saveLink.download = name;
-    saveLink.style.display = 'none';
-    document.body.appendChild(saveLink);
-    try {
-        const data = await fetch(uri);
-        const blob = await data.blob();
-        const url = URL.createObjectURL(blob);
-        saveLink.href = url;
-        saveLink.onclick = () => requestAnimationFrame(() => URL.revokeObjectURL(url));
-    }
-    catch (e) {
-        console.error(e);
-        console.warn('Error while getting object URL. Falling back to string URL.');
-        saveLink.href = uri;
-    }
-    saveLink.click();
-    document.body.removeChild(saveLink);
-}
-
-async function exportAndDownload(
-    this: void,
-    el: SVGGraphicsElement,
-    name: string,
-    options: SvgExportOptions,
-    generate: (this: void, el: SVGGraphicsElement, options: SvgExportOptions) => Promise<RenderedImageInfo<string>>
-) {
-    ensureDomNode(el);
-    const { data } = await generate(el, options || {});
-    return download(name, data);
-}
-
-export function saveSvg(
-    this: void,
-    el: SVGGraphicsElement,
-    name: string,
-    options: SvgExportOptions
-) {
-    return exportAndDownload(el, name, options, svgAsDataUri);
-}
-
-export function saveSvgAsPng(
-    this: void,
-    el: SVGGraphicsElement,
-    name: string,
-    options: SvgExportOptions
-) {
-    return exportAndDownload(el, name, options, svgAsPngUri);
 }

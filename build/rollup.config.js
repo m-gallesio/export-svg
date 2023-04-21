@@ -6,10 +6,10 @@ import config from "../package.json" assert { type: "json" };
 
 rmSync("../dist", { force: true, recursive: true });
 
-const name = "exportSvg";
+const name = "index";
 
 export default [{
-    input: "src/exportSvg.ts",
+    input: "src/index.ts",
     output: [
         {
             file: config.main,
