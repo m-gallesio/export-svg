@@ -62,7 +62,7 @@ function ensureAttributeNS(
 
 /** @internal */
 
-export function buildSvg(
+export async function buildSvg(
     this: void,
     el: SVGGraphicsElement,
     options: SvgExportOptions
@@ -78,58 +78,57 @@ export function buildSvg(
         excludeCss = false,
     } = options || {};
 
-    return inlineImages(el).then(() => {
-        let clone = el.cloneNode(true) as typeof el | SVGElement;
-        clone.style.backgroundColor = backgroundColor || el.style.backgroundColor;
+    await inlineImages(el);
+    let clone = el.cloneNode(true) as typeof el | SVGElement;
+    clone.style.backgroundColor = backgroundColor || el.style.backgroundColor;
 
-        const dim = getDimensions(el, w, h, clone);
-        if (!dim) {
-            console.error('Attempted to render non-SVG element', el);
-            return;
-        }
+    const dim = getDimensions(el, w, h, clone);
+    if (!dim) {
+        console.error('Attempted to render non-SVG element', el);
+        return;
+    }
 
-        const { width, height } = dim;
-        clone = dim.clone;
+    const { width, height } = dim;
+    clone = dim.clone;
 
-        clone.setAttribute('version', '1.1');
-        clone.setAttribute('viewBox', [left, top, width, height].join(' '));
-        ensureAttributeNS(clone, xmlNs, 'xmlns', svgNs);
-        ensureAttributeNS(clone, xmlNs, 'xmlns:xlink', xlinkNs);
+    clone.setAttribute('version', '1.1');
+    clone.setAttribute('viewBox', [left, top, width, height].join(' '));
+    ensureAttributeNS(clone, xmlNs, 'xmlns', svgNs);
+    ensureAttributeNS(clone, xmlNs, 'xmlns:xlink', xlinkNs);
 
-        if (responsive) {
-            clone.removeAttribute('width');
-            clone.removeAttribute('height');
-            clone.setAttribute('preserveAspectRatio', 'xMinYMin meet');
-        }
-        else {
-            clone.setAttribute('width', (width * scale).toString());
-            clone.setAttribute('height', (height * scale).toString());
-        }
+    if (responsive) {
+        clone.removeAttribute('width');
+        clone.removeAttribute('height');
+        clone.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+    }
+    else {
+        clone.setAttribute('width', (width * scale).toString());
+        clone.setAttribute('height', (height * scale).toString());
+    }
 
-        for (const foreignObject of clone.querySelectorAll('foreignObject > *')) {
-            ensureAttributeNS(foreignObject, xmlNs, 'xmlns', foreignObject.tagName === 'svg' ? svgNs : xhtmlNs);
-        }
+    for (const foreignObject of clone.querySelectorAll('foreignObject > *')) {
+        ensureAttributeNS(foreignObject, xmlNs, 'xmlns', foreignObject.tagName === 'svg' ? svgNs : xhtmlNs);
+    }
 
-        if (excludeCss) {
-            const outer = document.createElement('div');
-            outer.appendChild(clone);
-            const src = outer.innerHTML;
+    if (excludeCss) {
+        const outer = document.createElement('div');
+        outer.appendChild(clone);
+        const src = outer.innerHTML;
 
-            return { src, width, height };
-        }
+        return { src, width, height };
+    }
 
-        return inlineCss(el, options).then(css => {
-            const style = createStylesheet(`<![CDATA[\n${css}\n]]>`);
+    const css = await inlineCss(el, options);
 
-            const defs = document.createElement('defs');
-            defs.appendChild(style);
-            clone.insertBefore(defs, clone.firstChild);
+    const style = createStylesheet(`<![CDATA[\n${css}\n]]>`);
 
-            const outer = document.createElement('div');
-            outer.appendChild(clone);
-            const src = outer.innerHTML.replace(/NS\d+:href/gi, `xmlns:xlink="${xlinkNs}" xlink:href`);
+    const defs = document.createElement('defs');
+    defs.appendChild(style);
+    clone.insertBefore(defs, clone.firstChild);
 
-            return { src, width, height };
-        });
-    });
+    const outer = document.createElement('div');
+    outer.appendChild(clone);
+    const src = outer.innerHTML.replace(/NS\d+:href/gi, `xmlns:xlink="${xlinkNs}" xlink:href`);
+
+    return { src, width, height };
 }

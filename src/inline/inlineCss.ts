@@ -148,7 +148,7 @@ async function processRuleList(
 
 /** @internal */
 
-export function inlineCss(
+export async function inlineCss(
     this: void,
     el: Element,
     options: CssOptions
@@ -178,12 +178,10 @@ export function inlineCss(
         inlineAllFonts
     };
 
-    return getStyleSheets()
-        .then(async styles => {
-            for (const { rules, href } of styles) {
-                await processRuleList(rules, href, el, acc, opts);
-            }
-        })
-        .then(() => inlineFonts(acc.fonts))
-        .then(fontCss => acc.css.join('\n') + fontCss);
+    const styles = await getStyleSheets();
+    for (const { rules, href } of styles) {
+        await processRuleList(rules, href, el, acc, opts);
+    }
+    const fontCss = await inlineFonts(acc.fonts);
+    return acc.css.join('\n') + fontCss;
 }

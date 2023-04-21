@@ -68,38 +68,36 @@ export function detectCssFont(
 
 const cachedFonts: { [key: string]: string | null; } = {};
 
-function loadFont(
+async function loadFont(
     this: void,
     font: FontInfo
 ) {
-    if (cachedFonts[font.url])
-        return Promise.resolve(cachedFonts[font.url]);
-
-    return fetch(font.url)
-        .then(response => response.ok ? response.arrayBuffer() : Promise.reject())
-        .then(responseContent => {
+    if (!cachedFonts[font.url]) {
+        try {
+            const response = await fetch(font.url);
+            const responseContent = await (response.ok ? response.arrayBuffer() : Promise.reject());
             // TODO: it may also be worth it to wait until fonts are fully loaded before
             // attempting to rasterize them. (e.g. use https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet)
             const fontInBase64 = arrayBufferToBase64(responseContent);
             const fontUri = font.text.replace(urlRegex, `url("data:${font.format};base64,${fontInBase64}")`) + '\n';
             cachedFonts[font.url] = fontUri;
-            return fontUri;
-        })
-        .catch(e => {
+        } 
+        catch (e) {
             console.warn(`Failed to load font from: ${font.url}`, e);
             cachedFonts[font.url] ||= '';
-            return '';
-        })
-        .then(() => cachedFonts[font.url]);
+            '';
+        }
+    }
+    return cachedFonts[font.url];
 }
 
 /** @internal */
 
-export function inlineFonts(
+export async function inlineFonts(
     this: void,
     fonts: FontInfo[]
 ) {
-    return Promise
-        .all(fonts.map(loadFont))
-        .then(fontCss => fontCss.join(''));
+    const fontCss = await Promise
+        .all(fonts.map(loadFont));
+    return fontCss.join('');
 }

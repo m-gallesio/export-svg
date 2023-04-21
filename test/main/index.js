@@ -95,7 +95,7 @@ inlineTest('With @import css', '#import-css');
 
 const sandbox = document.getElementById('sandbox');
 
-sandbox.querySelector('.render').addEventListener('click', () => {
+sandbox.querySelector('.render').addEventListener('click', async () => {
     const error = sandbox.querySelector('.error');
     error.style.display = 'none';
     error.innerText = '';
@@ -103,7 +103,7 @@ sandbox.querySelector('.render').addEventListener('click', () => {
     const canvas = sandbox.querySelector('.load-target svg');
     const preview = sandbox.querySelector('.preview');
     try {
-        exportSvg.svgAsPngUri(canvas, null, (uri, width, height) => {
+        await exportSvg.svgAsPngUri(canvas, null, (uri, width, height) => {
             preview.innerHTML = '<div>' +
                 '<img src="' + uri + '" />' +
                 '<div>width=' + width + ', height=' + height + '</div>' +
@@ -111,7 +111,8 @@ sandbox.querySelector('.render').addEventListener('click', () => {
         });
         sandbox.querySelector('.save').onclick = () => exportSvg.
             saveSvgAsPng(canvas, 'test.png');
-    } catch (err) {
+    } 
+    catch (err) {
         error.innerText = err.message;
         error.style.display = 'block';
         preview.innerHTML = '';
