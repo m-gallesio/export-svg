@@ -84,8 +84,7 @@ export async function buildSvg(
 
     const dim = getDimensions(el, w, h, clone);
     if (!dim) {
-        console.error('Attempted to render non-SVG element', el);
-        return;
+        throw new TypeError('Attempted to render non-SVG element');
     }
 
     const { width, height } = dim;

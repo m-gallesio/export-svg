@@ -3,13 +3,12 @@ import { buildSvg } from "./buildSvg";
 
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [<!ENTITY nbsp "&#160;">]>';
 
-async function ensureDomNode(
+function ensureDomNode(
     this: void,
     el: any
-): Promise<typeof el extends HTMLElement | SVGElement ? void : never> {
-    return el instanceof HTMLElement || el instanceof SVGElement
-        ? Promise.resolve()
-        : Promise.reject(new Error(`an HTMLElement or SVGElement is required; got ${el}`));
+): typeof el extends HTMLElement | SVGElement ? void : never {
+    if (!(el instanceof HTMLElement || el instanceof SVGElement))
+        throw new Error(`an HTMLElement or SVGElement is required; got ${el}`);
 }
 
 function reEncode(
@@ -29,25 +28,25 @@ export async function svgAsDataUri(
     this: void,
     el: SVGGraphicsElement,
     options: SvgExportOptions
-) {
-    await ensureDomNode(el);
+): Promise<RenderedImageInfo<string>> {
+    ensureDomNode(el);
     const output = await buildSvg(el, options);
     const {
         src,
         width,
         height
     } = output || {};
-    const uri = `data:image/svg+xml;base64,${window.btoa(reEncode(doctype + src))}`;
-    return { uri, width, height };
+    const data = `data:image/svg+xml;base64,${window.btoa(reEncode(doctype + src))}`;
+    return { data, width, height };
 }
 
-function toRasterDataUrl(
+function renderSvgToCanvas(
     this: void,
     src: HTMLImageElement,
-    options: CanvasEncoderOptions
+    canvasOptions?: CanvasRenderingContext2DSettings
 ) {
     const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d')!;
+    const context = canvas.getContext('2d', canvasOptions)!;
     const pixelRatio = window.devicePixelRatio || 1;
 
     canvas.width = src.width * pixelRatio;
@@ -57,12 +56,21 @@ function toRasterDataUrl(
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     context.drawImage(src, 0, 0);
 
+    return canvas;
+}
+
+function toRasterDataUrl(
+    this: void,
+    src: HTMLImageElement,
+    options: CanvasEncoderOptions
+): RenderedImageInfo<string> {
+    const canvas = renderSvgToCanvas(src, options.canvasSettings);
     const {
-        encoderType = 'image/png',
-        encoderOptions = 0.8
+        type = 'image/png',
+        quality = 0.8
     } = options || {};
-    const uri = canvas.toDataURL(encoderType, encoderOptions);
-    return { uri, width: canvas.width, height: canvas.height };
+    const data = canvas.toDataURL(type, quality);
+    return { data, width: canvas.width, height: canvas.height };
 }
 
 export async function svgAsPngUri(
@@ -70,17 +78,17 @@ export async function svgAsPngUri(
     el: SVGGraphicsElement,
     options: SvgExportOptions
 ) {
-    await ensureDomNode(el);
-    const { uri } = await svgAsDataUri(el, options);
-    return new Promise((resolve: (value: RenderedImageInfo) => void, reject) => {
+    ensureDomNode(el);
+    const { data } = await svgAsDataUri(el, options);
+    return new Promise((resolve: (value: RenderedImageInfo<string>) => void, reject) => {
         const image = new Image();
         image.onload = () => {
             resolve(toRasterDataUrl(image, options));
         };
         image.onerror = () => {
-            reject(`There was an error loading the data URI as an image on the following SVG\n${window.atob(uri.slice(26))}Open the following link to see browser's diagnosis\n${uri}`);
+            reject(`Error loading SVG data uri as image:\n${window.atob(data.slice(26))}Open the following link to see browser's diagnosis\n${data}`);
         };
-        image.src = uri;
+        image.src = data;
     });
 }
 
@@ -114,11 +122,11 @@ async function exportAndDownload(
     el: SVGGraphicsElement,
     name: string,
     options: SvgExportOptions,
-    generate: (this: void, el: SVGGraphicsElement, options: SvgExportOptions) => Promise<RenderedImageInfo>
+    generate: (this: void, el: SVGGraphicsElement, options: SvgExportOptions) => Promise<RenderedImageInfo<string>>
 ) {
-    await ensureDomNode(el);
-    const { uri } = await generate(el, options || {});
-    return download(name, uri);
+    ensureDomNode(el);
+    const { data } = await generate(el, options || {});
+    return download(name, data);
 }
 
 export function saveSvg(

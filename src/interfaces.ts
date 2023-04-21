@@ -6,9 +6,11 @@ export interface FontInfo {
 
 export interface CanvasEncoderOptions {
     /// A Number between 0 and 1 indicating image quality. The default is 0.8
-    encoderOptions?: number;
-    /// A DOMString indicating the image format. The default type is image/png.
-    encoderType?: string;
+    quality?: number;
+    /// A string indicating the image format. The default type is image/png.
+    type?: string;
+    /// Settings used in the creation of the canvas's 2D rendering context.
+    canvasSettings?: CanvasRenderingContext2DSettings;
 }
 
 export interface FontOptions {
@@ -48,9 +50,9 @@ export interface SvgExportOptions extends CanvasEncoderOptions, CssOptions {
     width?: number;
 }
 
-export interface RenderedImageInfo {
-    /// The rendered image as a data URI
-    uri: string;
+export interface RenderedImageInfo<T> {
+    /// The rendered image
+    data: T;
     width?: number;
     height?: number;
 }
