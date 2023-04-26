@@ -16,7 +16,7 @@ export function ensureDomNode(
 function reEncode(
     this: void,
     data: string
-) {
+): string {
     return decodeURIComponent(
         encodeURIComponent(data)
             .replace(/%([0-9A-F]{2})/g, (_, p1: number) => {
@@ -28,7 +28,7 @@ function reEncode(
 
 /** @internal */
 
-export async function svgAsDataUri(
+export async function toSvgDataUri(
     this: void,
     el: SVGGraphicsElement,
     options: SvgExportOptions
@@ -44,11 +44,13 @@ export async function svgAsDataUri(
     return { data, width, height };
 }
 
-function renderSvgToCanvas(
+// TODO: expose this somehow
+
+function toCanvas(
     this: void,
     src: HTMLImageElement,
     canvasOptions?: CanvasRenderingContext2DSettings
-) {
+): HTMLCanvasElement {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d', canvasOptions)!;
     const pixelRatio = window.devicePixelRatio || 1;
@@ -69,7 +71,7 @@ async function toRaster<TResult>(
     options: CanvasEncoderOptions,
     getData: (canvas: HTMLCanvasElement, type: string, quality: number) => TResult | Promise<TResult>
 ): Promise<RenderedImageInfo<TResult>> {
-    const canvas = renderSvgToCanvas(src, options.canvasSettings);
+    const canvas = toCanvas(src, options.canvasSettings);
     const {
         type = 'image/png',
         quality = 0.8
@@ -86,9 +88,9 @@ async function renderToResult<TResult>(
     el: SVGGraphicsElement,
     options: SvgExportOptions,
     render: (image: HTMLImageElement, options: SvgExportOptions) => RenderedImageInfo<TResult> | Promise<RenderedImageInfo<TResult>>
-) {
+): Promise<RenderedImageInfo<TResult>> {
     ensureDomNode(el);
-    const { data } = await svgAsDataUri(el, options);
+    const { data } = await toSvgDataUri(el, options);
     return new Promise((resolve: (value: RenderedImageInfo<TResult>) => void, reject) => {
         const image = new Image();
         image.onload = async () => {
@@ -103,11 +105,11 @@ async function renderToResult<TResult>(
 
 /** @internal */
 
-export async function svgAsPngUri(
+export async function toRasterDataUri(
     this: void,
     el: SVGGraphicsElement,
     options: SvgExportOptions
-) {
+): Promise<RenderedImageInfo<string>> {
     return renderToResult(el, options, (src, options) => toRaster(
         src,
         options,
@@ -117,11 +119,11 @@ export async function svgAsPngUri(
 
 /** @internal */
 
-export async function svgAsPngBlob(
+export async function toRasterBlob(
     this: void,
     el: SVGGraphicsElement,
     options: SvgExportOptions
-) {
+): Promise<RenderedImageInfo<Blob>> {
     return renderToResult(el, options, (src, options) => toRaster(
         src,
         options,

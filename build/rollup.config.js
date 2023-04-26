@@ -6,7 +6,7 @@ import config from "../package.json" assert { type: "json" };
 
 rmSync("../dist", { force: true, recursive: true });
 
-const name = "index";
+const name = "exportSvg";
 
 export default [{
     input: "src/index.ts",
@@ -19,7 +19,7 @@ export default [{
         {
             file: config.module,
             format: "es",
-            name: config.name
+            name
         },
         {
             file: `${config.main.replace('.js', '')}.min.js`,
@@ -30,7 +30,7 @@ export default [{
         {
             file: `${config.module.replace('.js', '')}.min.js`,
             format: "es",
-            name: config.name,
+            name,
             plugins: [terser()]
         }
     ],

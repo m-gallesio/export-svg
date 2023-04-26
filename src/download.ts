@@ -1,11 +1,11 @@
 import type { RenderedImageInfo, SvgExportOptions } from "./interfaces";
-import { ensureDomNode, svgAsDataUri, svgAsPngUri } from "./render";
+import { ensureDomNode, toSvgDataUri, toRasterDataUri } from "./render";
 
 async function download(
     this: void,
     name: string,
     uri: string
-) {
+): Promise<void> {
     const saveLink = document.createElement('a');
     saveLink.download = name;
     saveLink.style.display = 'none';
@@ -32,7 +32,7 @@ async function exportAndDownload(
     name: string,
     options: SvgExportOptions,
     generate: (this: void, el: SVGGraphicsElement, options: SvgExportOptions) => Promise<RenderedImageInfo<string>>
-) {
+): Promise<void> {
     ensureDomNode(el);
     const { data } = await generate(el, options || {});
     return download(name, data);
@@ -40,22 +40,22 @@ async function exportAndDownload(
 
 /** @internal */
 
-export function saveSvg(
+export function downloadSvg(
     this: void,
     el: SVGGraphicsElement,
     name: string,
     options: SvgExportOptions
-) {
-    return exportAndDownload(el, name, options, svgAsDataUri);
+): Promise<void> {
+    return exportAndDownload(el, name, options, toSvgDataUri);
 }
 
 /** @internal */
 
-export function saveSvgAsPng(
+export function downloadRaster(
     this: void,
     el: SVGGraphicsElement,
     name: string,
     options: SvgExportOptions
-) {
-    return exportAndDownload(el, name, options, svgAsPngUri);
+): Promise<void> {
+    return exportAndDownload(el, name, options, toRasterDataUri);
 }

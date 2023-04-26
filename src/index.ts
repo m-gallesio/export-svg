@@ -1,10 +1,10 @@
-import { saveSvg, saveSvgAsPng } from "./download";
-import { svgAsDataUri, svgAsPngBlob, svgAsPngUri } from "./render";
+import { downloadRaster, downloadSvg } from "./download";
+import { toRasterBlob, toRasterDataUri, toSvgDataUri } from "./render";
 
 export default Object.freeze({
-    asDataUri: svgAsDataUri,
-    asRasterDataUri: svgAsPngUri,
-    asRasterBlob: svgAsPngBlob,
-    downloadSvg : saveSvg,
-    downloadRaster: saveSvgAsPng,
+    toSvgDataUri,
+    toRasterDataUri,
+    toRasterBlob,
+    downloadSvg,
+    downloadRaster
 });
