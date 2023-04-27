@@ -1,4 +1,4 @@
-import type { CanvasEncoderOptions, RenderedImageInfo, SvgExportOptions } from "./interfaces";
+import type { CanvasEncoderOptions, ImageInfo, SvgExportOptions } from "./interfaces";
 import { buildSvg } from "./buildSvg";
 
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [<!ENTITY nbsp "&#160;">]>';
@@ -26,22 +26,42 @@ function reEncode(
     );
 }
 
-/** @internal */
-
 export async function toSvgDataUri(
     this: void,
     el: SVGGraphicsElement,
     options: SvgExportOptions
-): Promise<RenderedImageInfo<string>> {
+): Promise<ImageInfo<string>> {
     ensureDomNode(el);
     const output = await buildSvg(el, options);
     const {
-        src,
+        image,
         width,
         height
     } = output || {};
-    const data = `data:image/svg+xml;base64,${window.btoa(reEncode(doctype + src))}`;
-    return { data, width, height };
+    return {
+        image: `data:image/svg+xml;base64,${window.btoa(reEncode(doctype + image))}`,
+        width,
+        height
+    };
+}
+
+async function toImage(
+    this: void,
+    el: SVGGraphicsElement,
+    options: SvgExportOptions
+): Promise<HTMLImageElement> {
+    ensureDomNode(el);
+    const { image: data } = await toSvgDataUri(el, options);
+    return new Promise((resolve: (value: HTMLImageElement) => void, reject) => {
+        const image = new Image();
+        image.onload = () => {
+            resolve(image);
+        };
+        image.onerror = () => {
+            reject(`Error loading SVG data uri as image:\n${window.atob(data.slice(26))}Open the following link to see browser's diagnosis\n${data}`);
+        };
+        image.src = data;
+    });
 }
 
 // TODO: expose this somehow
@@ -67,70 +87,47 @@ function toCanvas(
 
 async function toRaster<TResult>(
     this: void,
-    src: HTMLImageElement,
-    options: CanvasEncoderOptions,
-    getData: (canvas: HTMLCanvasElement, type: string, quality: number) => TResult | Promise<TResult>
-): Promise<RenderedImageInfo<TResult>> {
-    const canvas = toCanvas(src, options.canvasSettings);
+    el: SVGGraphicsElement,
+    options: SvgExportOptions,
+    render: (canvas: HTMLCanvasElement, type: string, quality: number) => TResult | Promise<TResult>
+) {
+    const img = await toImage(el, options);
+    const canvas = toCanvas(img, options.canvasSettings);
     const {
         type = 'image/png',
         quality = 0.8
     } = options || {};
     return {
-        data: await getData(canvas, type, quality),
+        image: await render(canvas, type, quality),
         width: canvas.width,
         height: canvas.height
     }
 }
 
-async function renderToResult<TResult>(
-    this: void,
-    el: SVGGraphicsElement,
-    options: SvgExportOptions,
-    render: (image: HTMLImageElement, options: SvgExportOptions) => RenderedImageInfo<TResult> | Promise<RenderedImageInfo<TResult>>
-): Promise<RenderedImageInfo<TResult>> {
-    ensureDomNode(el);
-    const { data } = await toSvgDataUri(el, options);
-    return new Promise((resolve: (value: RenderedImageInfo<TResult>) => void, reject) => {
-        const image = new Image();
-        image.onload = async () => {
-            resolve(await render(image, options));
-        };
-        image.onerror = () => {
-            reject(`Error loading SVG data uri as image:\n${window.atob(data.slice(26))}Open the following link to see browser's diagnosis\n${data}`);
-        };
-        image.src = data;
-    });
-}
-
-/** @internal */
-
 export async function toRasterDataUri(
     this: void,
     el: SVGGraphicsElement,
     options: SvgExportOptions
-): Promise<RenderedImageInfo<string>> {
-    return renderToResult(el, options, (src, options) => toRaster(
-        src,
+): Promise<ImageInfo<string>> {
+    return toRaster(
+        el,
         options,
         (canvas, type, quality) => canvas.toDataURL(type, quality)
-    ));
+    );
 }
-
-/** @internal */
 
 export async function toRasterBlob(
     this: void,
     el: SVGGraphicsElement,
     options: SvgExportOptions
-): Promise<RenderedImageInfo<Blob>> {
-    return renderToResult(el, options, (src, options) => toRaster(
-        src,
+): Promise<ImageInfo<Blob>> {
+    return toRaster(
+        el,
         options,
         (canvas, type, quality) => new Promise((resolve: (value: Blob) => void, reject) => {
             canvas.toBlob(blob => blob
                 ? resolve(blob)
                 : reject(`Error converting SVG data URI to blob`), type, quality);
         })
-    ));
+    );
 }

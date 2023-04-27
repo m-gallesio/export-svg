@@ -50,9 +50,9 @@ export interface SvgExportOptions extends CanvasEncoderOptions, CssOptions {
     width?: number;
 }
 
-export interface RenderedImageInfo<T> {
+export interface ImageInfo<T> {
     /// The rendered image
-    data: T;
+    image: T;
     width: number;
     height: number;
 }

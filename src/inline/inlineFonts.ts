@@ -14,7 +14,7 @@ const fontFormats: { [key: string]: string; } = {
 function getFontMimeTypeFromUrl(
     this: void,
     fontUrl: string
-) {
+): string {
     const formats = Object.keys(fontFormats)
         .filter(extension => fontUrl.indexOf(`.${extension}`) > 0)
         .map(extension => fontFormats[extension]);
@@ -27,7 +27,7 @@ function getFontMimeTypeFromUrl(
 function arrayBufferToBase64(
     this: void,
     buffer: ArrayBufferLike
-) {
+): string {
     let binary = '';
     const bytes = new Uint8Array(buffer);
     for (let i = 0; i < bytes.byteLength; i++)
@@ -71,7 +71,7 @@ const cachedFonts: { [key: string]: string | null; } = {};
 async function loadFont(
     this: void,
     font: FontInfo
-) {
+): Promise<string | null> {
     if (!cachedFonts[font.url]) {
         try {
             const response = await fetch(font.url);
@@ -96,7 +96,7 @@ async function loadFont(
 export async function inlineFonts(
     this: void,
     fonts: FontInfo[]
-) {
+): Promise<string> {
     const fontCss = await Promise
         .all(fonts.map(loadFont));
     return fontCss.join('');

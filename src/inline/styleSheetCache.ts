@@ -8,7 +8,7 @@ interface LoadedCssStyleSheet {
 export async function loadRemoteStyleSheet(
     this: void,
     href: string
-) {
+): Promise<LoadedCssStyleSheet | null> {
     try {
         const response = await fetch(href);
         const contents = await response.text();
@@ -30,7 +30,7 @@ export async function loadRemoteStyleSheet(
 async function loadStyleSheetRules(
     this: void,
     sheet: CSSStyleSheet
-) {
+): Promise<LoadedCssStyleSheet | null> {
     try {
         if (sheet.cssRules)
             return { rules: sheet.cssRules, href: sheet.href };
@@ -50,7 +50,7 @@ let styleCache: LoadedCssStyleSheet[] | null | undefined = null;
 
 export async function getStyleSheets(
     this: void
-) {
+): Promise<LoadedCssStyleSheet[]> {
     styleCache = styleCache || await Promise
         .all(Array.from(document.styleSheets)
             .filter(sheet => !sheet.media || window.matchMedia(sheet.media.toString()).matches)
@@ -64,7 +64,7 @@ export async function getStyleSheets(
 export function createStylesheet(
     this: void,
     css: string
-) {
+): HTMLStyleElement {
     const style = document.createElement('style');
     style.setAttribute('type', 'text/css');
     style.innerHTML = css;

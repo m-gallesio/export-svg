@@ -1,7 +1,7 @@
 import { inlineCss } from "./inline/inlineCss";
 import { inlineImages } from "./inline/inlineImages";
 import { createStylesheet } from "./inline/styleSheetCache";
-import type { SvgExportOptions } from "./interfaces";
+import type { ImageInfo, SvgExportOptions } from "./interfaces";
 import { svgNs, xmlNs, xlinkNs, xhtmlNs } from "./namespaces";
 
 function getDimensions(
@@ -10,12 +10,12 @@ function getDimensions(
     w: number | null | undefined,
     h: number | null | undefined,
     clone: typeof el
-) {
+): ImageInfo<SVGSVGElement> | null {
     if (el instanceof SVGSVGElement) {
         return {
             width: w || getDimension(el, 'width'),
             height: h || getDimension(el, 'height'),
-            clone: clone as SVGSVGElement
+            image: clone as SVGSVGElement
         };
     }
     if (el instanceof SVGGraphicsElement) {
@@ -28,7 +28,7 @@ function getDimensions(
         return {
             width: bb.x + bb.width,
             height: bb.y + bb.height,
-            clone: svg
+            image: svg
         };
     }
     return null;
@@ -38,7 +38,7 @@ function getDimension(
     this: void,
     el: SVGSVGElement,
     dim: "width" | "height"
-) {
+): number {
     const v =
         (el.viewBox && el.viewBox.baseVal && el.viewBox.baseVal[dim]) ||
         (el.getAttribute(dim) && !el.getAttribute(dim)!.match(/%$/) && parseInt(el.getAttribute(dim)!)) ||
@@ -54,7 +54,7 @@ function ensureAttributeNS(
     namespace: string | null,
     qualifiedName: string,
     value: string
-) {
+): void {
     if (!el.getAttribute(qualifiedName)) {
         el.setAttributeNS(namespace, qualifiedName, value);
     }
@@ -66,7 +66,7 @@ export async function buildSvg(
     this: void,
     el: SVGGraphicsElement,
     options: SvgExportOptions
-) {
+): Promise<ImageInfo<string>> {
     const {
         left = 0,
         top = 0,
@@ -88,7 +88,7 @@ export async function buildSvg(
     }
 
     const { width, height } = dim;
-    clone = dim.clone;
+    clone = dim.image;
 
     clone.setAttribute('version', '1.1');
     clone.setAttribute('viewBox', [left, top, width, height].join(' '));
@@ -112,13 +112,15 @@ export async function buildSvg(
     if (excludeCss) {
         const outer = document.createElement('div');
         outer.appendChild(clone);
-        const src = outer.innerHTML;
 
-        return { src, width, height };
+        return {
+            image: outer.innerHTML,
+            width,
+            height
+        };
     }
 
     const css = await inlineCss(el, options);
-
     const style = createStylesheet(`<![CDATA[\n${css}\n]]>`);
 
     const defs = document.createElement('defs');
@@ -127,7 +129,10 @@ export async function buildSvg(
 
     const outer = document.createElement('div');
     outer.appendChild(clone);
-    const src = outer.innerHTML.replace(/NS\d+:href/gi, `xmlns:xlink="${xlinkNs}" xlink:href`);
 
-    return { src, width, height };
+    return {
+        image: outer.innerHTML.replace(/NS\d+:href/gi, `xmlns:xlink="${xlinkNs}" xlink:href`),
+        width,
+        height
+    };
 }

@@ -11,7 +11,7 @@ function isExternal(
 export function inlineImages(
     this: void,
     el: SVGElement
-) {
+): Promise<unknown[]> {
     return Promise.all(Array.from(el.querySelectorAll('image')).map(image => {
         let href = image.getAttributeNS(xlinkNs, 'href') || image.getAttribute('href') || '';
         if (!href) {

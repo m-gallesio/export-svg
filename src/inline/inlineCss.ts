@@ -6,7 +6,7 @@ function query(
     this: void,
     el: Element,
     selector: string
-) {
+): Element | null | undefined {
     if (selector) {
         try {
             return el.querySelector(selector) || el.parentNode?.querySelector(selector);
@@ -24,7 +24,7 @@ function processCssRule(
     el: Element,
     generateCss: (selector: string, properties: string) => string,
     css: string[]
-) {
+): boolean {
     if (rule.style) {
         if (query(el, rule.selectorText)) {
             css.push(generateCss(rule.selectorText, rule.style.cssText));
@@ -41,7 +41,7 @@ function processCssFontFaceRule(
     href: string | null | undefined,
     fontList: FontInfo[],
     options: CssFontLoadingOptions
-) {
+): boolean {
     if (options.detectFonts) {
         const font = detectCssFont(rule.cssText, href, options.inlineAllFonts);
         if (font) {
@@ -73,7 +73,7 @@ function processCssMediaRule(
     href: string | null | undefined,
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
-) {
+): boolean {
     if (window.matchMedia(rule.conditionText).matches) {
         processRuleList(rule.cssRules, href, el, accumulator, options);
     }
@@ -87,7 +87,7 @@ function processCssSupportsRule(
     href: string | null | undefined,
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
-) {
+): boolean {
     if ('supports' in CSS && CSS.supports(rule.conditionText)) {
         processRuleList(rule.cssRules, href, el, accumulator, options);
     }
@@ -100,7 +100,7 @@ async function processCssImportRule(
     el: Element,
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
-) {
+): Promise<boolean> {
     if (!rule.media.length || Array.from(rule.media).some(medium => window.matchMedia(medium).matches)) {
         try {
             const style = await loadRemoteStyleSheet(rule.href);
@@ -121,7 +121,7 @@ async function processRuleList(
     el: Element,
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
-) {
+): Promise<void> {
     for (const rule of rules) {
         let isProcessed = false;
         if (rule instanceof CSSStyleRule) {
@@ -152,7 +152,7 @@ export async function inlineCss(
     this: void,
     el: Element,
     options: CssOptions
-) {
+): Promise<string> {
     const {
         selectorRemap,
         modifyStyle,
