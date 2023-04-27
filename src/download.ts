@@ -1,5 +1,5 @@
 import type { ImageInfo, SvgExportOptions } from "./interfaces";
-import { ensureDomNode, toSvgDataUri, toRasterDataUri } from "./render";
+import { toSvgDataUri, toRasterDataUri } from "./render";
 
 async function download(
     this: void,
@@ -33,7 +33,6 @@ async function exportAndDownload(
     options: SvgExportOptions,
     generate: (this: void, el: SVGGraphicsElement, options: SvgExportOptions) => Promise<ImageInfo<string>>
 ): Promise<void> {
-    ensureDomNode(el);
     const { image: data } = await generate(el, options || {});
     return download(name, data);
 }

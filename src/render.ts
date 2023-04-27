@@ -3,16 +3,6 @@ import { toSvgText } from "./buildSvg";
 
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [<!ENTITY nbsp "&#160;">]>';
 
-/** @internal */
-
-export function ensureDomNode(
-    this: void,
-    el: any
-): typeof el extends HTMLElement | SVGElement ? void : never {
-    if (!(el instanceof HTMLElement || el instanceof SVGElement))
-        throw new Error(`an HTMLElement or SVGElement is required; got ${el}`);
-}
-
 function reEncode(
     this: void,
     data: string
@@ -31,7 +21,6 @@ export async function toSvgDataUri(
     el: SVGGraphicsElement,
     options?: SvgExportOptions | null
 ): Promise<ImageInfo<string>> {
-    ensureDomNode(el);
     const output = await toSvgText(el, options);
     const {
         image,
@@ -45,17 +34,20 @@ export async function toSvgDataUri(
     };
 }
 
-async function toImage(
+export async function toImage(
     this: void,
     el: SVGGraphicsElement,
     options?: SvgExportOptions | null
-): Promise<HTMLImageElement> {
-    ensureDomNode(el);
+): Promise<ImageInfo<HTMLImageElement>> {
     const { image: data } = await toSvgDataUri(el, options);
-    return new Promise((resolve: (value: HTMLImageElement) => void, reject) => {
+    return new Promise((resolve, reject) => {
         const image = new Image();
         image.onload = () => {
-            resolve(image);
+            resolve({
+                image,
+                width: image.width,
+                height: image.height
+            });
         };
         image.onerror = () => {
             reject(`Error loading SVG data uri as image:\n${window.atob(data.slice(26))}Open the following link to see browser's diagnosis\n${data}`);
@@ -68,12 +60,14 @@ export async function toCanvas(
     this: void,
     el: SVGGraphicsElement,
     options?: SvgExportOptions | null,
-): Promise<HTMLCanvasElement> {
+): Promise<ImageInfo<HTMLCanvasElement>> {
+    const { image: img } = await toImage(el, options);
+
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d', options && options.canvasSettings || undefined)!;
+    // this should ensure the exported image has the same size regardless of the device
     const pixelRatio = window.devicePixelRatio || 1;
 
-    const img = await toImage(el, options);
     canvas.width = img.width * pixelRatio;
     canvas.height = img.height * pixelRatio;
     canvas.style.width = `${canvas.width}px`;
@@ -81,7 +75,11 @@ export async function toCanvas(
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     context.drawImage(img, 0, 0);
 
-    return canvas;
+    return {
+        image: canvas,
+        width: canvas.width,
+        height: canvas.height
+    };
 }
 
 async function toRaster<TResult>(
@@ -90,15 +88,15 @@ async function toRaster<TResult>(
     options: SvgExportOptions | null | undefined,
     render: (canvas: HTMLCanvasElement, type: string, quality: number) => TResult | Promise<TResult>,
 ) {
-    const canvas = await toCanvas(el, options);
+    const { image: canvas, width, height } = await toCanvas(el, options);
     const {
         type = 'image/png',
-        quality = 0.8
+        quality = .8
     } = options || {};
     return {
         image: await render(canvas, type, quality),
-        width: canvas.width,
-        height: canvas.height
+        width,
+        height
     }
 }
 

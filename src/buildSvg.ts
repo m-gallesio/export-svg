@@ -60,13 +60,15 @@ function ensureAttributeNS(
     }
 }
 
-/** @internal */
-
 export async function toSvgText(
     this: void,
     el: SVGGraphicsElement,
     options?: SvgExportOptions | null
 ): Promise<ImageInfo<string>> {
+    
+    if (!(el instanceof HTMLElement || el instanceof SVGElement))
+        throw new Error(`an HTMLElement or SVGElement is required; got ${el}`);
+
     const {
         left = 0,
         top = 0,
