@@ -151,7 +151,7 @@ async function processRuleList(
 export async function inlineCss(
     this: void,
     el: Element,
-    options: CssOptions
+    options?: CssOptions | null
 ): Promise<string> {
     const {
         selectorRemap,

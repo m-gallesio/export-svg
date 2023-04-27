@@ -62,10 +62,10 @@ function ensureAttributeNS(
 
 /** @internal */
 
-export async function buildSvg(
+export async function toSvgText(
     this: void,
     el: SVGGraphicsElement,
-    options: SvgExportOptions
+    options?: SvgExportOptions | null
 ): Promise<ImageInfo<string>> {
     const {
         left = 0,

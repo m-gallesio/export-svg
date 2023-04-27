@@ -1,5 +1,5 @@
-import type { CanvasEncoderOptions, ImageInfo, SvgExportOptions } from "./interfaces";
-import { buildSvg } from "./buildSvg";
+import type { ImageInfo, SvgExportOptions } from "./interfaces";
+import { toSvgText } from "./buildSvg";
 
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [<!ENTITY nbsp "&#160;">]>';
 
@@ -29,10 +29,10 @@ function reEncode(
 export async function toSvgDataUri(
     this: void,
     el: SVGGraphicsElement,
-    options: SvgExportOptions
+    options?: SvgExportOptions | null
 ): Promise<ImageInfo<string>> {
     ensureDomNode(el);
-    const output = await buildSvg(el, options);
+    const output = await toSvgText(el, options);
     const {
         image,
         width,
@@ -48,7 +48,7 @@ export async function toSvgDataUri(
 async function toImage(
     this: void,
     el: SVGGraphicsElement,
-    options: SvgExportOptions
+    options?: SvgExportOptions | null
 ): Promise<HTMLImageElement> {
     ensureDomNode(el);
     const { image: data } = await toSvgDataUri(el, options);
@@ -64,23 +64,22 @@ async function toImage(
     });
 }
 
-// TODO: expose this somehow
-
-function toCanvas(
+export async function toCanvas(
     this: void,
-    src: HTMLImageElement,
-    canvasOptions?: CanvasRenderingContext2DSettings
-): HTMLCanvasElement {
+    el: SVGGraphicsElement,
+    options?: SvgExportOptions | null,
+): Promise<HTMLCanvasElement> {
     const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d', canvasOptions)!;
+    const context = canvas.getContext('2d', options && options.canvasSettings || undefined)!;
     const pixelRatio = window.devicePixelRatio || 1;
 
-    canvas.width = src.width * pixelRatio;
-    canvas.height = src.height * pixelRatio;
+    const img = await toImage(el, options);
+    canvas.width = img.width * pixelRatio;
+    canvas.height = img.height * pixelRatio;
     canvas.style.width = `${canvas.width}px`;
     canvas.style.height = `${canvas.height}px`;
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    context.drawImage(src, 0, 0);
+    context.drawImage(img, 0, 0);
 
     return canvas;
 }
@@ -88,11 +87,10 @@ function toCanvas(
 async function toRaster<TResult>(
     this: void,
     el: SVGGraphicsElement,
-    options: SvgExportOptions,
-    render: (canvas: HTMLCanvasElement, type: string, quality: number) => TResult | Promise<TResult>
+    options: SvgExportOptions | null | undefined,
+    render: (canvas: HTMLCanvasElement, type: string, quality: number) => TResult | Promise<TResult>,
 ) {
-    const img = await toImage(el, options);
-    const canvas = toCanvas(img, options.canvasSettings);
+    const canvas = await toCanvas(el, options);
     const {
         type = 'image/png',
         quality = 0.8
@@ -107,7 +105,7 @@ async function toRaster<TResult>(
 export async function toRasterDataUri(
     this: void,
     el: SVGGraphicsElement,
-    options: SvgExportOptions
+    options?: SvgExportOptions
 ): Promise<ImageInfo<string>> {
     return toRaster(
         el,
@@ -119,7 +117,7 @@ export async function toRasterDataUri(
 export async function toRasterBlob(
     this: void,
     el: SVGGraphicsElement,
-    options: SvgExportOptions
+    options?: SvgExportOptions
 ): Promise<ImageInfo<Blob>> {
     return toRaster(
         el,
