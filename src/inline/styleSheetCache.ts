@@ -1,6 +1,8 @@
+import type { Nullable } from "../interfaces";
+
 interface LoadedCssStyleSheet {
     rules: CSSRuleList | CSSRule[];
-    href: string | null | undefined;
+    href: Nullable<string>;
 }
 
 /** @internal */
@@ -8,19 +10,19 @@ interface LoadedCssStyleSheet {
 export async function loadRemoteStyleSheet(
     this: void,
     href: string
-): Promise<LoadedCssStyleSheet | null> {
+): Promise<Nullable<LoadedCssStyleSheet>> {
     try {
         const response = await fetch(href);
         const contents = await response.text();
         // needs to be in the DOM to be read
         const element = document.body.appendChild(createStylesheet(contents));
-        let loadedStyle: LoadedCssStyleSheet | null = null;
+        let loadedStyle: Nullable<LoadedCssStyleSheet> = null;
         if (element.sheet && element.sheet.cssRules) {
             loadedStyle = { rules: Array.from(element.sheet.cssRules), href };
         }
         element.remove();
         return loadedStyle;
-    } 
+    }
     catch (e) {
         console.warn(`Stylesheet could not be loaded: ${href}`, e);
         return null;
@@ -30,7 +32,7 @@ export async function loadRemoteStyleSheet(
 async function loadStyleSheetRules(
     this: void,
     sheet: CSSStyleSheet
-): Promise<LoadedCssStyleSheet | null> {
+): Promise<Nullable<LoadedCssStyleSheet>> {
     try {
         if (sheet.cssRules)
             return { rules: sheet.cssRules, href: sheet.href };
@@ -44,7 +46,7 @@ async function loadStyleSheetRules(
     return null;
 }
 
-let styleCache: LoadedCssStyleSheet[] | null | undefined = null;
+let styleCache: Nullable<LoadedCssStyleSheet[]> = null;
 
 /** @internal */
 

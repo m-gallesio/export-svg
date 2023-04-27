@@ -1,16 +1,16 @@
 import { inlineCss } from "./inline/inlineCss";
 import { inlineImages } from "./inline/inlineImages";
 import { createStylesheet } from "./inline/styleSheetCache";
-import type { ImageInfo, SvgExportOptions } from "./interfaces";
+import type { ImageInfo, SvgExportOptions, Nullable } from "./interfaces";
 import { svgNs, xmlNs, xlinkNs, xhtmlNs } from "./namespaces";
 
 function getDimensions(
     this: void,
     el: SVGElement,
-    w: number | null | undefined,
-    h: number | null | undefined,
+    w: Nullable<number>,
+    h: Nullable<number>,
     clone: typeof el
-): ImageInfo<SVGSVGElement> | null {
+): Nullable<ImageInfo<SVGSVGElement>> {
     if (el instanceof SVGSVGElement) {
         return {
             width: w || getDimension(el, 'width'),
@@ -63,9 +63,9 @@ function ensureAttributeNS(
 export async function toSvgText(
     this: void,
     el: SVGGraphicsElement,
-    options?: SvgExportOptions | null
+    options?: Nullable<SvgExportOptions>
 ): Promise<ImageInfo<string>> {
-    
+
     if (!(el instanceof HTMLElement || el instanceof SVGElement))
         throw new Error(`an HTMLElement or SVGElement is required; got ${el}`);
 

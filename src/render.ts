@@ -1,4 +1,4 @@
-import type { ImageInfo, SvgExportOptions } from "./interfaces";
+import type { ImageInfo, SvgExportOptions, Nullable } from "./interfaces";
 import { toSvgText } from "./buildSvg";
 
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [<!ENTITY nbsp "&#160;">]>';
@@ -19,7 +19,7 @@ function reEncode(
 export async function toSvgDataUri(
     this: void,
     el: SVGGraphicsElement,
-    options?: SvgExportOptions | null
+    options?: Nullable<SvgExportOptions>
 ): Promise<ImageInfo<string>> {
     const output = await toSvgText(el, options);
     const {
@@ -37,7 +37,7 @@ export async function toSvgDataUri(
 export async function toImage(
     this: void,
     el: SVGGraphicsElement,
-    options?: SvgExportOptions | null
+    options?: Nullable<SvgExportOptions>
 ): Promise<ImageInfo<HTMLImageElement>> {
     const { image: data } = await toSvgDataUri(el, options);
     return new Promise((resolve, reject) => {
@@ -59,7 +59,7 @@ export async function toImage(
 export async function toCanvas(
     this: void,
     el: SVGGraphicsElement,
-    options?: SvgExportOptions | null,
+    options?: Nullable<SvgExportOptions>,
 ): Promise<ImageInfo<HTMLCanvasElement>> {
     const { image: img } = await toImage(el, options);
 
@@ -85,7 +85,7 @@ export async function toCanvas(
 async function toRaster<TResult>(
     this: void,
     el: SVGGraphicsElement,
-    options: SvgExportOptions | null | undefined,
+    options: Nullable<SvgExportOptions>,
     render: (canvas: HTMLCanvasElement, type: string, quality: number) => TResult | Promise<TResult>,
 ) {
     const { image: canvas, width, height } = await toCanvas(el, options);

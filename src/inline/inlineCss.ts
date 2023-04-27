@@ -1,12 +1,12 @@
 import { detectCssFont, inlineFonts } from "./inlineFonts";
-import type { CssOptions, FontInfo } from "../interfaces";
+import type { CssOptions, FontInfo, Nullable } from "../interfaces";
 import { getStyleSheets, loadRemoteStyleSheet } from "./styleSheetCache";
 
 function query(
     this: void,
     el: Element,
     selector: string
-): Element | null | undefined {
+): Nullable<Element> {
     if (selector) {
         try {
             return el.querySelector(selector) || el.parentNode?.querySelector(selector);
@@ -38,7 +38,7 @@ function processCssRule(
 function processCssFontFaceRule(
     this: void,
     rule: CSSFontFaceRule,
-    href: string | null | undefined,
+    href: Nullable<string>,
     fontList: FontInfo[],
     options: CssFontLoadingOptions
 ): boolean {
@@ -70,7 +70,7 @@ function processCssMediaRule(
     this: void,
     rule: CSSMediaRule,
     el: Element,
-    href: string | null | undefined,
+    href: Nullable<string>,
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
 ): boolean {
@@ -84,7 +84,7 @@ function processCssSupportsRule(
     this: void,
     rule: CSSSupportsRule,
     el: Element,
-    href: string | null | undefined,
+    href: Nullable<string>,
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
 ): boolean {
@@ -117,7 +117,7 @@ async function processCssImportRule(
 async function processRuleList(
     this: void,
     rules: CSSRuleList | CSSRule[],
-    href: string | null | undefined,
+    href: Nullable<string>,
     el: Element,
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
@@ -151,7 +151,7 @@ async function processRuleList(
 export async function inlineCss(
     this: void,
     el: Element,
-    options?: CssOptions | null
+    options?: Nullable<CssOptions>
 ): Promise<string> {
     const {
         selectorRemap,
@@ -174,7 +174,7 @@ export async function inlineCss(
             return `${sel}{${props}}\n`;
         }),
         excludeUnusedCss,
-        detectFonts: !Boolean(fonts),
+        detectFonts: !fonts,
         inlineAllFonts
     };
 

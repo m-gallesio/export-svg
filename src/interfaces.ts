@@ -56,3 +56,7 @@ export interface ImageInfo<T> {
     width: number;
     height: number;
 }
+
+/** @internal */
+
+export type Nullable<T> = T | null | undefined;

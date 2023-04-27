@@ -1,7 +1,7 @@
-import type { FontInfo } from "../interfaces";
+import type { FontInfo, Nullable } from "../interfaces";
 
 const urlRegex = /url\(["']?(.+?)["']?\)/;
-const fontFormats: { [key: string]: string; } = {
+const fontFormats: Readonly<Record<string, string>> = Object.freeze({
     woff2: 'font/woff2',
     woff: 'font/woff',
     otf: 'application/x-font-opentype',
@@ -9,17 +9,16 @@ const fontFormats: { [key: string]: string; } = {
     eot: 'application/vnd.ms-fontobject',
     sfnt: 'application/font-sfnt',
     svg: 'image/svg+xml'
-};
+});
 
 function getFontMimeTypeFromUrl(
     this: void,
     fontUrl: string
 ): string {
-    const formats = Object.keys(fontFormats)
-        .filter(extension => fontUrl.indexOf(`.${extension}`) > 0)
-        .map(extension => fontFormats[extension]);
-    if (formats)
-        return formats[0];
+    for (const entry of Object.entries(fontFormats)) {
+        if (fontUrl.endsWith(`.${entry[0]}`))
+            return entry[1];
+    }
     console.error(`Unknown font format for ${fontUrl}. Fonts may not be working correctly.`);
     return 'application/octet-stream';
 }
@@ -40,9 +39,9 @@ function arrayBufferToBase64(
 export function detectCssFont(
     this: void,
     cssText: string,
-    href: string | null | undefined,
+    href: Nullable<string>,
     inlineAllFonts: boolean
-): FontInfo | null | undefined {
+): Nullable<FontInfo> {
     // Match CSS font-face rules to external links.
     // @font-face {
     //   src: local('Abel'), url(https://fonts.gstatic.com/s/abel/v6/UzN-iejR1VoXU2Oc-7LsbvesZW2xOQ-xsNqO47m55DA.woff2);
@@ -58,6 +57,7 @@ export function detectCssFont(
         fullUrl = `${href}/${url}`;
     else
         fullUrl = url;
+    fullUrl = fullUrl.toLowerCase();
 
     return {
         text: cssText,
@@ -66,7 +66,7 @@ export function detectCssFont(
     };
 }
 
-const cachedFonts: { [key: string]: string | null; } = {};
+const cachedFonts: Record<string, string | null> = {};
 
 async function loadFont(
     this: void,
@@ -81,11 +81,10 @@ async function loadFont(
             const fontInBase64 = arrayBufferToBase64(responseContent);
             const fontUri = font.text.replace(urlRegex, `url("data:${font.format};base64,${fontInBase64}")`) + '\n';
             cachedFonts[font.url] = fontUri;
-        } 
+        }
         catch (e) {
             console.warn(`Failed to load font from: ${font.url}`, e);
             cachedFonts[font.url] ||= '';
-            '';
         }
     }
     return cachedFonts[font.url];
@@ -97,7 +96,5 @@ export async function inlineFonts(
     this: void,
     fonts: FontInfo[]
 ): Promise<string> {
-    const fontCss = await Promise
-        .all(fonts.map(loadFont));
-    return fontCss.join('');
+    return (await Promise.all(fonts.map(loadFont))).join('');
 }
