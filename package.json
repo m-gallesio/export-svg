@@ -27,7 +27,7 @@
   "scripts": {
     "build": "rollup -c ./build/rollup.config.js",
     "clean": "rm -fr dist",
-    "test": "node test/test.js"
+    "test": "node test/test.cjs"
   },
   "repository": {
     "type": "git",

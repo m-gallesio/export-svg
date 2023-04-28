@@ -2,7 +2,7 @@ import { toSvgText } from "./buildSvg";
 import { downloadRaster, downloadSvg } from "./download";
 import { toCanvas, toImage, toRasterBlob, toRasterDataUri, toSvgDataUri } from "./render";
 
-export const exportSvg = Object.freeze({
+export default Object.freeze({
     toSvgText,
     toSvgDataUri,
     toImage,

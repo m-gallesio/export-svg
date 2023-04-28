@@ -432,11 +432,10 @@ angular.module('RadialGaugeDemo').controller('RadialGaugeDemoCtrl', ['$scope', '
             color: '#C50200'
         }
     ];
-    $scope.OnClick = function () {
+    $scope.OnClick = async function () {
         console.log("click");
-        svgAsDataUri(document.getElementsByTagName("svg")[0], null, function (uri) {
-            const img = '<img class="img-thumbnail" src="' + uri + '">';
-            d3.select("#svgpreview").html(img);
-        });
+        const uri = await exportSvg.toSvgDataUri(document.getElementsByTagName("svg")[0], null);
+        const img = '<img class="img-thumbnail" src="' + uri + '">';
+        d3.select("#svgpreview").html(img);
     }
 }]);     

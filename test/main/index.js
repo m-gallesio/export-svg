@@ -8,7 +8,7 @@ document.getElementById('file').addEventListener('change', function handleFileSe
     reader.onload = e => {
         element.querySelector('.load-target').innerHTML = e.target.result;
         exportSvg
-            .svgAsPngUri(element.querySelector('.load-target svg'), null)
+            .toRasterDataUri(element.querySelector('.load-target svg'), null)
             .then(({ uri, width, height }) => {
                 element.querySelector('input').style.display = 'none';
                 element.querySelector('.preview').innerHTML = '<div>' +
@@ -17,7 +17,7 @@ document.getElementById('file').addEventListener('change', function handleFileSe
                     '</div>';
             });
         element.querySelector('.save').onclick = () => exportSvg
-            .saveSvgAsPng(element.querySelector('.load-target svg'), 'test.png')
+            .downloadRaster(element.querySelector('.load-target svg'), 'test.png')
     };
     reader.readAsText(file);
 }, false);
@@ -36,19 +36,20 @@ function inlineTest(title, selector, saveOptions, testOptions) {
 
     const canvas = element.querySelector(testOptions && testOptions.selector || 'svg');
     exportSvg
-        .svgAsPngUri(canvas, saveOptions)
-        .then(({ uri, width, height }) => {
+        .toRasterDataUri(canvas, saveOptions)
+        .then(uri => {
             element.querySelector('.preview').innerHTML = '<div>' +
                 '<img src="' + uri + '" />' +
-                '<div>width=' + width + ', height=' + height + '</div>' +
                 '</div>';
         });
     element.querySelector('.save').onclick = () => exportSvg
-        .saveSvgAsPng(canvas, 'test.png', saveOptions);
+        .downloadRaster(canvas, 'test.png', saveOptions);
 }
 
 inlineTest('Directly in the HTML', '#inline');
+// TODO: BROKEN
 inlineTest('With linked PNG image', '#embedded-png');
+// TODO: BROKEN
 inlineTest('With linked SVG image', '#embedded-svg');
 inlineTest('Sized with pixels', '#sized-with-pixels');
 inlineTest('Sized with style', '#sized-with-style');
@@ -87,6 +88,7 @@ inlineTest('When using HTML entites', '#entities');
 inlineTest('Transformed text', '#transformed-text');
 inlineTest('With marker-end', '#marker-end');
 inlineTest('SVG style attribute', '#style-background');
+// TODO: BROKEN
 inlineTest('SVG within SVG', '#svg-in-svg');
 inlineTest('excluding unused CSS', '#exclude-unused-css', { excludeUnusedCss: true });
 inlineTest('With custom fonts', '#custom-font');
@@ -103,15 +105,13 @@ sandbox.querySelector('.render').addEventListener('click', async () => {
     const canvas = sandbox.querySelector('.load-target svg');
     const preview = sandbox.querySelector('.preview');
     try {
-        await exportSvg.svgAsPngUri(canvas, null, (uri, width, height) => {
-            preview.innerHTML = '<div>' +
-                '<img src="' + uri + '" />' +
-                '<div>width=' + width + ', height=' + height + '</div>' +
-                '</div>';
-        });
+        const uri = await exportSvg.toRasterDataUri(canvas, null);
+        preview.innerHTML = '<div>' +
+            '<img src="' + uri + '" />' +
+            '</div>';
         sandbox.querySelector('.save').onclick = () => exportSvg.
-            saveSvgAsPng(canvas, 'test.png');
-    } 
+            downloadRaster(canvas, 'test.png');
+    }
     catch (err) {
         error.innerText = err.message;
         error.style.display = 'block';

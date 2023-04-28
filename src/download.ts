@@ -1,4 +1,4 @@
-import type { ImageInfo, SvgExportOptions } from "./interfaces";
+import type { SvgExportOptions } from "./interfaces";
 import { toSvgDataUri, toRasterDataUri } from "./render";
 
 async function download(
@@ -26,31 +26,20 @@ async function download(
     document.body.removeChild(saveLink);
 }
 
-async function exportAndDownload(
-    this: void,
-    el: SVGGraphicsElement,
-    name: string,
-    options: SvgExportOptions,
-    generate: (this: void, el: SVGGraphicsElement, options: SvgExportOptions) => Promise<ImageInfo<string>>
-): Promise<void> {
-    const { image: data } = await generate(el, options || {});
-    return download(name, data);
-}
-
-export function downloadSvg(
+export async function downloadSvg(
     this: void,
     el: SVGGraphicsElement,
     name: string,
     options: SvgExportOptions
 ): Promise<void> {
-    return exportAndDownload(el, name, options, toSvgDataUri);
+    return download(name, await toSvgDataUri(el, options));
 }
 
-export function downloadRaster(
+export async function downloadRaster(
     this: void,
     el: SVGGraphicsElement,
     name: string,
     options: SvgExportOptions
 ): Promise<void> {
-    return exportAndDownload(el, name, options, toRasterDataUri);
+    return download(name, await toRasterDataUri(el, options));
 }

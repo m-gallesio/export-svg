@@ -9,6 +9,9 @@ This library requires the following functionalities in the runtime:
 - `async` functions (see support on [Can I use](https://caniuse.com/async-functions))
 - `Promise`s (see support on [Can I use](https://caniuse.com/promises))
 - `fetch` (see support on [Can I use](https://caniuse.com/fetch))
+- `Object.entries` (see support on [Can I use](https://caniuse.com/object-entries))
+
+Essentially, a browser compatible with [ES2017/ES8](https://caniuse.com/sr_es8) should work.
 
 TODO:
 - handle multiple font urls (under a flag since it costs bandwidth)
@@ -45,7 +48,7 @@ exportSvg.downloadRaster(document.getElementById("mySvgElement"));
 
 Please note that this package **IS STILL IN ALPHA** and its API is not yet fully designed,
 so versions earlier than the eventual 1.0.0 **WILL** break without warning.
-Use it at your own risk and feel free to report any issues.
+Use it at your own risk and feel free to report any issues or ideas.
 
 ## Rendering methods
 
