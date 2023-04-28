@@ -50,10 +50,7 @@ Use it at your own risk and feel free to report any issues.
 ## Rendering methods
 
 Rendering methods convert a SVG into another form.
-The all are in the form `exportSvg.method(svgElement, options)` and return a `Promise` which resolves with an object with the following attributes:
-- `data`: the rendered image in a form dependent on the method
-- `width`: the width in pixels of the image
-- `height`: the height in pixels of the image
+The all are in the form `exportSvg.method(svgElement, options)` and return a `Promise` which resolves with the rendered image, whose format depends on the method.
 
 The methods are:
 - `toSvgDataUri`: converts a SVG element to a data URI
