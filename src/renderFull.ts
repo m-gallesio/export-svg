@@ -11,6 +11,7 @@ async function svgToCanvas(
     return imageToCanvas(image);
 }
 
+/** Converts a SVG element to a raster image (PNG by default) as a data URI. */
 export async function svgToRasterDataUri(
     this: void,
     el: SVGGraphicsElement,
@@ -19,6 +20,7 @@ export async function svgToRasterDataUri(
     return canvasToRasterDataUri(await svgToCanvas(el, options), options);
 }
 
+/** Converts a SVG element to a raster image (PNG by default) as a `Blob`. */
 export async function svgToRasterBlob(
     this: void,
     el: SVGGraphicsElement,

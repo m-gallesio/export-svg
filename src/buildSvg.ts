@@ -60,6 +60,7 @@ function ensureAttributeNS(
     }
 }
 
+/** Inlines all external resources into the SVG. */
 export async function svgToInlinedSvg(
     this: void,
     el: SVGGraphicsElement,

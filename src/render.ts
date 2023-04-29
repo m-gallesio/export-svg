@@ -16,6 +16,7 @@ function reEncode(
     );
 }
 
+/** Converts a SVG element (assumed to be already inlined) to a data URI. */
 export function inlinedSvgToDataUri(
     this: void,
     el: SVGElement
@@ -23,6 +24,7 @@ export function inlinedSvgToDataUri(
     return `data:image/svg+xml;base64,${window.btoa(reEncode(doctype + el.outerHTML))}`;
 }
 
+/** Converts a SVG element to a data URI. */
 export async function svgToInlinedSvgDataUri(
     this: void,
     el: SVGGraphicsElement,
@@ -32,6 +34,7 @@ export async function svgToInlinedSvgDataUri(
     return inlinedSvgToDataUri(svg);
 }
 
+/** Creates a `HTMLImageElement` (`<img>`) with the given data URI as its `src`. */
 export async function dataUriToImage(
     this: void,
     dataUri: string
@@ -48,6 +51,7 @@ export async function dataUriToImage(
     });
 }
 
+/** Creates a `HTMLCanvasElement` (`<canvas>`) tailored to the given image and draws the image on it. */
 export function imageToCanvas(
     this: void,
     img: HTMLImageElement,
@@ -78,6 +82,7 @@ function ensureOptions(
     return options;
 }
 
+/** Gets the content of a canvas as a data URI. */
 export function canvasToRasterDataUri(
     this: void,
     canvas: HTMLCanvasElement,
@@ -90,6 +95,7 @@ export function canvasToRasterDataUri(
     );
 }
 
+/** Gets the content of a canvas as a `Blob`. */
 export async function canvasToRasterBlob(
     this: void,
     canvas: HTMLCanvasElement,

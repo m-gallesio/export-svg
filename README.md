@@ -81,7 +81,7 @@ They all are in the form `function(svgElement, fileName, options)`
 and return a `Promise` which resolves with no result.
 
 - `downloadSvg`: downloads the SVG
-- `downloadRaster`: converts the SVG to a raster image (PNG by default) and downloads it
+- `downloadRaster`: converts the SVG to a raster image (PNG by default) which is then downloaded
 
 ## Intermediate rendering pipeline
 
