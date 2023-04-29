@@ -9,7 +9,7 @@ function query(
 ): Nullable<Element> {
     if (selector) {
         try {
-            return el.querySelector(selector) || el.parentNode?.querySelector(selector);
+            return el.querySelector(selector) || el.parentNode && el.parentNode.querySelector(selector);
         }
         catch (err) {
             console.warn(`Invalid CSS selector "${selector}"`, err);

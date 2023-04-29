@@ -46,7 +46,8 @@ export function detectCssFont(
     if (inlineAllFonts)
         throw new Error("The option 'inlineAllFonts' is not implemented yet.");
 
-    const url = cssText.match(urlRegex)?.[1] || "";
+    const match = cssText.match(urlRegex);
+    const url = match && match[1] || "";
     if (!url || url.match(/^data:/) || url === "about:blank")
         return null;
 
