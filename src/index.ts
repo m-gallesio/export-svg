@@ -1,3 +1,13 @@
+export type {
+    FontInfo,
+    FontOptions,
+    CssOptions,
+    SvgToInlinedSvgOptions,
+    ImageToCanvasOptions,
+    CanvasEncoderOptions,
+    SvgExportOptions
+} from "./interfaces";
+
 export {
     svgToInlinedSvg
 } from "./buildSvg";

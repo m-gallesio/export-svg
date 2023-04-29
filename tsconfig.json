@@ -8,6 +8,8 @@
     "stripInternal": true,
     "declaration": true,
     "noImplicitReturns": true,
+    "removeComments": true,
+    "declarationDir": "types"
   },
   "include": [
     "src/**/*"

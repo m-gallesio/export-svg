@@ -3,6 +3,7 @@ import terser from "@rollup/plugin-terser";
 import { rmSync } from "fs";
 
 import config from "../package.json" assert { type: "json" };
+import tsconfig from "../tsconfig.json" assert { type: "json" };
 
 rmSync("../dist", { force: true, recursive: true });
 
@@ -35,10 +36,6 @@ export default [{
         }
     ],
     plugins: [
-        typescript({
-            removeComments: true,
-            declaration: true,
-            declarationDir: "types"
-        })
+        typescript(tsconfig.compilerOptions)
     ]
 }];
