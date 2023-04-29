@@ -2,8 +2,9 @@
   "name": "export-svg",
   "license": "MIT",
   "author": "Matteo Gallesio, Eric Shull",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Convert a browser SVG to PNG or dataUri",
+  "sideEffects": "false",
   "keywords": [
     "svg",
     "png",
