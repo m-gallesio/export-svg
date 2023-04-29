@@ -1,4 +1,4 @@
-import type { FontInfo, Nullable } from "../interfaces";
+import type { FontInfo } from "../interfaces";
 
 const urlRegex = /url\(["']?(.+?)["']?\)/;
 const fontFormats: Readonly<Record<string, string>> = Object.freeze({
@@ -39,9 +39,9 @@ function arrayBufferToBase64(
 export function detectCssFont(
     this: void,
     cssText: string,
-    href: Nullable<string>,
+    href: string | null,
     inlineAllFonts: boolean
-): Nullable<FontInfo> {
+): FontInfo | null {
     // TODO: implement this
     if (inlineAllFonts)
         throw new Error("The option 'inlineAllFonts' is not implemented yet.");

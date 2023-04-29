@@ -1,4 +1,4 @@
-import type { CanvasEncoderOptions, ImageToCanvasOptions, SvgExportOptions, Nullable } from "./interfaces";
+import type { CanvasEncoderOptions, ImageToCanvasOptions, SvgExportOptions } from "./interfaces";
 import { svgToInlinedSvg } from "./buildSvg";
 
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [<!ENTITY nbsp "&#160;">]>';
@@ -28,7 +28,7 @@ export function inlinedSvgToDataUri(
 export async function svgToInlinedSvgDataUri(
     this: void,
     el: SVGGraphicsElement,
-    options?: Nullable<SvgExportOptions>
+    options?: SvgExportOptions | null
 ): Promise<string> {
     const svg = await svgToInlinedSvg(el, options);
     return inlinedSvgToDataUri(svg);
@@ -55,7 +55,7 @@ export async function dataUriToImage(
 export function imageToCanvas(
     this: void,
     img: HTMLImageElement,
-    options?: Nullable<ImageToCanvasOptions>,
+    options?: ImageToCanvasOptions | null,
 ): HTMLCanvasElement {
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d", options && options.canvasSettings || undefined)!;

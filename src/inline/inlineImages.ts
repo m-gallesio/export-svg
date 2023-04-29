@@ -1,8 +1,7 @@
-import type { Nullable } from "../interfaces";
 import { xlinkNs } from "../namespaces";
 
 function isExternal(
-    url: Nullable<string>
+    url: string | null
 ): url is string {
     return Boolean(url && url.lastIndexOf("http", 0) === 0 && url.lastIndexOf(window.location.host) === -1);
 }

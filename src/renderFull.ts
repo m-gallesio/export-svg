@@ -1,10 +1,10 @@
-import type { SvgExportOptions, Nullable } from "./interfaces";
+import type { SvgExportOptions } from "./interfaces";
 import { canvasToRasterBlob, canvasToRasterDataUri, dataUriToImage, imageToCanvas, svgToInlinedSvgDataUri } from "./render";
 
 async function svgToCanvas(
     this: void,
     el: SVGGraphicsElement,
-    options?: Nullable<SvgExportOptions>
+    options?: SvgExportOptions | null
 ): Promise<HTMLCanvasElement> {
     const dataUri = await svgToInlinedSvgDataUri(el, options);
     const image = await dataUriToImage(dataUri);

@@ -1,12 +1,12 @@
 import { detectCssFont, inlineFonts } from "./inlineFonts";
-import type { CssOptions, FontInfo, Nullable } from "../interfaces";
+import type { CssOptions, FontInfo } from "../interfaces";
 import { getStyleSheets, loadRemoteStyleSheet } from "./styleSheetCache";
 
 function query(
     this: void,
     el: Element,
     selector: string
-): Nullable<Element> {
+): Element | null {
     if (selector) {
         try {
             return el.querySelector(selector) || el.parentNode && el.parentNode.querySelector(selector);
@@ -38,7 +38,7 @@ function processCssRule(
 function processCssFontFaceRule(
     this: void,
     rule: CSSFontFaceRule,
-    href: Nullable<string>,
+    href: string | null,
     fontList: FontInfo[],
     options: CssFontLoadingOptions
 ): boolean {
@@ -70,7 +70,7 @@ function processCssMediaRule(
     this: void,
     rule: CSSMediaRule,
     el: Element,
-    href: Nullable<string>,
+    href: string | null,
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
 ): boolean {
@@ -84,7 +84,7 @@ function processCssSupportsRule(
     this: void,
     rule: CSSSupportsRule,
     el: Element,
-    href: Nullable<string>,
+    href: string | null,
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
 ): boolean {
@@ -117,7 +117,7 @@ async function processCssImportRule(
 async function processRuleList(
     this: void,
     rules: CSSRuleList | CSSRule[],
-    href: Nullable<string>,
+    href: string | null,
     el: Element,
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
@@ -151,7 +151,7 @@ async function processRuleList(
 export async function inlineCss(
     this: void,
     el: Element,
-    options?: Nullable<CssOptions>
+    options?: CssOptions | null
 ): Promise<string> {
     const {
         selectorRemap,
@@ -163,7 +163,7 @@ export async function inlineCss(
     } = options || {};
 
     const acc: CssLoadingAccumulator = {
-        css: [] as string[],
+        css: [],
         fonts: fonts || []
     };
 

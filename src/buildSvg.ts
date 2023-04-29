@@ -1,7 +1,7 @@
 import { inlineCss } from "./inline/inlineCss";
 import { inlineImages } from "./inline/inlineImages";
 import { createStylesheet } from "./inline/styleSheetCache";
-import type { SvgToInlinedSvgOptions, Nullable } from "./interfaces";
+import type { SvgToInlinedSvgOptions } from "./interfaces";
 import { svgNs, xmlNs, xlinkNs, xhtmlNs } from "./namespaces";
 
 function getDimension(
@@ -9,9 +9,10 @@ function getDimension(
     el: SVGSVGElement,
     dim: "width" | "height"
 ): number {
+    let attr: string | null;
     const v =
         (el.viewBox && el.viewBox.baseVal && el.viewBox.baseVal[dim]) ||
-        (el.getAttribute(dim) && !el.getAttribute(dim)!.match(/%$/) && parseInt(el.getAttribute(dim)!)) ||
+        ((attr = el.getAttribute(dim)) && attr.match(/%$/) && parseInt(attr)) ||
         el.getBoundingClientRect()[dim] ||
         parseInt(el.style[dim]) ||
         parseInt(window.getComputedStyle(el).getPropertyValue(dim));
@@ -21,8 +22,8 @@ function getDimension(
 function getDimensions(
     this: void,
     el: SVGGraphicsElement,
-    w: Nullable<number>,
-    h: Nullable<number>,
+    w: number | null | undefined,
+    h: number | null | undefined,
     clone: typeof el
 ): { width: number; height: number; svg: SVGSVGElement; } {
     if (el instanceof SVGSVGElement) {
@@ -64,7 +65,7 @@ function ensureAttributeNS(
 export async function svgToInlinedSvg(
     this: void,
     el: SVGGraphicsElement,
-    options?: Nullable<SvgToInlinedSvgOptions>
+    options?: SvgToInlinedSvgOptions | null
 ): Promise<SVGSVGElement> {
 
     if (!(el instanceof HTMLElement || el instanceof SVGElement))
@@ -113,6 +114,6 @@ export async function svgToInlinedSvg(
         defs.appendChild(style);
         svg.insertBefore(defs, svg.firstChild);
     }
-    
+
     return svg;
 }

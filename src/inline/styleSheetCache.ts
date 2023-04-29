@@ -1,8 +1,6 @@
-import type { Nullable } from "../interfaces";
-
 interface LoadedCssStyleSheet {
     rules: CSSRuleList | CSSRule[];
-    href: Nullable<string>;
+    href: string | null;
 }
 
 /** @internal */
@@ -10,13 +8,13 @@ interface LoadedCssStyleSheet {
 export async function loadRemoteStyleSheet(
     this: void,
     href: string
-): Promise<Nullable<LoadedCssStyleSheet>> {
+): Promise<LoadedCssStyleSheet | null> {
     try {
         const response = await fetch(href);
         const contents = await response.text();
         // needs to be in the DOM to be read
         const element = document.body.appendChild(createStylesheet(contents));
-        let loadedStyle: Nullable<LoadedCssStyleSheet> = null;
+        let loadedStyle: LoadedCssStyleSheet | null = null;
         if (element.sheet && element.sheet.cssRules) {
             loadedStyle = { rules: Array.from(element.sheet.cssRules), href };
         }
@@ -32,7 +30,7 @@ export async function loadRemoteStyleSheet(
 async function loadStyleSheetRules(
     this: void,
     sheet: CSSStyleSheet
-): Promise<Nullable<LoadedCssStyleSheet>> {
+): Promise<LoadedCssStyleSheet | null> {
     try {
         if (sheet.cssRules)
             return { rules: sheet.cssRules, href: sheet.href };
@@ -46,7 +44,7 @@ async function loadStyleSheetRules(
     return null;
 }
 
-let styleCache: Nullable<LoadedCssStyleSheet[]> = null;
+let styleCache: LoadedCssStyleSheet[];
 
 /** @internal */
 

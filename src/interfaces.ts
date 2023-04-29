@@ -1,7 +1,3 @@
-/** @internal */
-
-export type Nullable<T> = T | null | undefined;
-
 export interface FontInfo {
     text: string;
     format: string;
@@ -9,7 +5,7 @@ export interface FontInfo {
 }
 
 export interface FontOptions {
-    /**
+    /**!
      * A list of `{text, url, format}` objects the specify what fonts to inline in the SVG.
      * Omitting this option defaults to auto-detecting font rules.
      */
