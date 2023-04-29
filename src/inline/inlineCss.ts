@@ -88,7 +88,7 @@ function processCssSupportsRule(
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
 ): boolean {
-    if ('supports' in CSS && CSS.supports(rule.conditionText)) {
+    if ("supports" in CSS && CSS.supports(rule.conditionText)) {
         processRuleList(rule.cssRules, href, el, accumulator, options);
     }
     return true;
@@ -183,5 +183,5 @@ export async function inlineCss(
         await processRuleList(rules, href, el, acc, opts);
     }
     const fontCss = await inlineFonts(acc.fonts);
-    return acc.css.join('\n') + fontCss;
+    return acc.css.join("\n") + fontCss;
 }

@@ -6,9 +6,9 @@ async function download(
     name: string,
     uri: string
 ): Promise<void> {
-    const saveLink = document.createElement('a');
+    const saveLink = document.createElement("a");
     saveLink.download = name;
-    saveLink.style.display = 'none';
+    saveLink.style.display = "none";
     document.body.appendChild(saveLink);
     try {
         const data = await fetch(uri);
@@ -19,7 +19,7 @@ async function download(
     }
     catch (e) {
         console.error(e);
-        console.warn('Error while getting object URL. Falling back to string URL.');
+        console.warn("Error while getting object URL. Falling back to string URL.");
         saveLink.href = uri;
     }
     saveLink.click();

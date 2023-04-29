@@ -11,7 +11,7 @@ function reEncode(
         encodeURIComponent(data)
             .replace(/%([0-9A-F]{2})/g, (_, p1: number) => {
                 const c = String.fromCharCode(Number("0x" + p1));
-                return c === '%' ? '%25' : c;
+                return c === "%" ? "%25" : c;
             })
     );
 }
@@ -50,8 +50,8 @@ export async function toCanvas(
 ): Promise<HTMLCanvasElement> {
     const img = await toImage(el, options);
 
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d', options && options.canvasSettings || undefined)!;
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d", options && options.canvasSettings || undefined)!;
     // this should ensure the exported image has the same size regardless of the device
     const pixelRatio = window.devicePixelRatio || 1;
 
@@ -70,7 +70,7 @@ function ensureOptions(
     options?: SvgExportOptions
 ): CanvasEncoderOptions {
     options = options || {};
-    options.type = options.type || 'image/png';
+    options.type = options.type || "image/png";
     options.quality = options.quality || .8;
     return options;
 }

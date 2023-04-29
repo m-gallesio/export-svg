@@ -1,18 +1,18 @@
-angular.module("ngRadialGauge", []).directive('ngRadialGauge', ['$window', '$timeout',
+angular.module("ngRadialGauge", []).directive("ngRadialGauge", ["$window", "$timeout",
     function ($window, $timeout) {
         return {
-            restrict: 'EAC',
+            restrict: "EAC",
             scope: {
-                data: '=',
-                lowerLimit: '=',
-                upperLimit: '=',
-                ranges: '=',
-                value: '=',
-                valueUnit: '=',
-                precision: '=',
-                majorGraduationPrecision: '=',
-                label: '=',// MODIFIED
-                onClick: '&'
+                data: "=",
+                lowerLimit: "=",
+                upperLimit: "=",
+                ranges: "=",
+                value: "=",
+                valueUnit: "=",
+                precision: "=",
+                majorGraduationPrecision: "=",
+                label: "=",// MODIFIED
+                onClick: "&"
             },
             link: function (scope, ele, attrs) {
                 const defaultUpperLimit = 100;
@@ -73,28 +73,28 @@ angular.module("ngRadialGauge", []).directive('ngRadialGauge', ['$window', '$tim
                 let label;
 
                 const updateInternalData = function () {
-                    maxLimit = extractData('upperLimit') ? extractData('upperLimit') : defaultUpperLimit;
-                    minLimit = extractData('lowerLimit') ? extractData('lowerLimit') : defaultLowerLimit;
-                    value = extractData('value');
-                    valueUnit = extractData('valueUnit');
-                    precision = extractData('precision');
-                    majorGraduationPrecision = extractData('majorGraduationPrecision');
-                    ranges = extractData('ranges');
-                    label = extractData('label'); // MODIFIED
+                    maxLimit = extractData("upperLimit") ? extractData("upperLimit") : defaultUpperLimit;
+                    minLimit = extractData("lowerLimit") ? extractData("lowerLimit") : defaultLowerLimit;
+                    value = extractData("value");
+                    valueUnit = extractData("valueUnit");
+                    precision = extractData("precision");
+                    majorGraduationPrecision = extractData("majorGraduationPrecision");
+                    ranges = extractData("ranges");
+                    label = extractData("label"); // MODIFIED
                 };
                 updateInternalData();
 
                 /* Colin Bester
                    Add viewBox and width attributes.
-                   Used view.width and view.height in case it's decided that hardcoding these values is an issue.
+                   Used view.width and view.height in case it"s decided that hardcoding these values is an issue.
                    Width can be specified as %, px etc and will scale image to fit.
                 */
                 const svg = d3.select(ele[0])
-                    .append('svg')
-                    .attr('width', _width)
-                    .attr('viewBox', '0 0 ' + view.width + ' ' + view.height);
-                // .attr('view.width', view.width)
-                // .attr('height', view.width * 0.75);
+                    .append("svg")
+                    .attr("width", _width)
+                    .attr("viewBox", "0 0 " + view.width + " " + view.height);
+                // .attr("view.width", view.width)
+                // .attr("height", view.width * 0.75);
                 const renderMajorGraduations = function (majorGraduationsAngles) {
                     const centerX = view.width / 2;
                     const centerY = view.width / 2;
@@ -241,15 +241,15 @@ angular.module("ngRadialGauge", []).directive('ngRadialGauge', ['$window', '$tim
                     }
                 };
                 const renderGraduationNeedle = function (value, valueUnit, precision, minLimit, maxLimit) {
-                    svg.selectAll('.mtt-graduation-needle').remove();
-                    svg.selectAll('.mtt-graduationValueText').remove();
-                    svg.selectAll('.mtt-graduation-needle-center').remove();
+                    svg.selectAll(".mtt-graduation-needle").remove();
+                    svg.selectAll(".mtt-graduationValueText").remove();
+                    svg.selectAll(".mtt-graduation-needle-center").remove();
 
                     const centerX = view.width / 2;
                     const centerY = view.width / 2;
                     let centerColor;
 
-                    if (typeof value === 'undefined') {
+                    if (typeof value === "undefined") {
                         centerColor = inactiveColor;
                     } else {
                         centerColor = needleColor;
@@ -266,14 +266,14 @@ angular.module("ngRadialGauge", []).directive('ngRadialGauge', ['$window', '$tim
                                 [-needleRadius, 0],
                                 [needleRadius, 0]
                             ];
-                            const pointerLine = d3.svg.line().interpolate('monotone');
-                            const pg = svg.append('g').data([lineData])
-                                .attr('class', 'mtt-graduation-needle')
+                            const pointerLine = d3.svg.line().interpolate("monotone");
+                            const pg = svg.append("g").data([lineData])
+                                .attr("class", "mtt-graduation-needle")
                                 .style("fill", needleColor)
-                                .attr('transform', 'translate(' + centerX + ',' + centerY + ')');
-                            needle = pg.append('path')
-                                .attr('d', pointerLine)
-                                .attr('transform', 'rotate(' + needleAngle + ')');
+                                .attr("transform", "translate(" + centerX + "," + centerY + ")");
+                            needle = pg.append("path")
+                                .attr("d", pointerLine)
+                                .attr("transform", "rotate(" + needleAngle + ")");
                         }
 
                         svg.append("text")
@@ -316,26 +316,19 @@ angular.module("ngRadialGauge", []).directive('ngRadialGauge', ['$window', '$tim
                     scope.render();
                 });
 
-                /* Colin Bester
-                   Removed watching of data.value as couldn't see reason for this, plus it's the cause of flicker when using
-                   data=option mode of using directive.
-                   I'm assuming that calling render function is not what was intended on every value update.
-                */
-                // scope.$watchCollection('[ranges, data.ranges, data.value]', function () {
-                scope.$watchCollection('[ranges, data.ranges]', function () {
+                scope.$watchCollection("[ranges, data.ranges]", function () {
                     scope.render();
                 }, true);
 
-
                 scope.render = function () {
                     updateInternalData();
-                    svg.selectAll('*').remove();
+                    svg.selectAll("*").remove();
                     if (renderTimeout) clearTimeout(renderTimeout);
 
                     renderTimeout = $timeout(function () {
                         const d3DataSource = [];
 
-                        if (typeof ranges === 'undefined') {
+                        if (typeof ranges === "undefined") {
                             d3DataSource.push([minLimit, maxLimit, inactiveColor]);
                         } else {
                             //Data Generation
@@ -370,23 +363,23 @@ angular.module("ngRadialGauge", []).directive('ngRadialGauge', ['$window', '$tim
 
                 };
                 const onValueChanged = function (pValue, pPrecision, pValueUnit) {
-                    if (typeof pValue === 'undefined' || pValue == null) return;
+                    if (typeof pValue === "undefined" || pValue == null) return;
 
                     if (needle && pValue >= minLimit && pValue <= maxLimit) {
                         const needleAngle = getNewAngle(pValue);
                         needle.transition()
                             .duration(transitionMs)
-                            .ease('elastic')
-                            .attr('transform', 'rotate(' + needleAngle + ')');
-                        svg.selectAll('.mtt-graduationValueText')
-                            .text('[ ' + pValue.toFixed(pPrecision) + pValueUnit + ' ]');
+                            .ease("elastic")
+                            .attr("transform", "rotate(" + needleAngle + ")");
+                        svg.selectAll(".mtt-graduationValueText")
+                            .text("[ " + pValue.toFixed(pPrecision) + pValueUnit + " ]");
                     } else {
-                        svg.selectAll('.mtt-graduation-needle').remove();
-                        svg.selectAll('.mtt-graduationValueText').remove();
-                        svg.selectAll('.mtt-graduation-needle-center').attr("fill", inactiveColor);
+                        svg.selectAll(".mtt-graduation-needle").remove();
+                        svg.selectAll(".mtt-graduationValueText").remove();
+                        svg.selectAll(".mtt-graduation-needle-center").attr("fill", inactiveColor);
                     }
                 };
-                scope.$watchCollection('[value, data.value]', function () {
+                scope.$watchCollection("[value, data.value]", function () {
                     if (!initialized) return;
                     updateInternalData();
                     onValueChanged(value, precision, valueUnit);
@@ -395,11 +388,11 @@ angular.module("ngRadialGauge", []).directive('ngRadialGauge', ['$window', '$tim
         };
     }]);
 
-angular.module('RadialGaugeDemo', [
-    'ngRadialGauge'
+angular.module("RadialGaugeDemo", [
+    "ngRadialGauge"
 ]);
 
-angular.module('RadialGaugeDemo').controller('RadialGaugeDemoCtrl', ['$scope', '$timeout', function ($scope, $timeout) {
+angular.module("RadialGaugeDemo").controller("RadialGaugeDemoCtrl", ["$scope", "$timeout", function ($scope, $timeout) {
     $scope.value = 1.5;
     $scope.upperLimit = 6;
     $scope.lowerLimit = 0;
@@ -409,33 +402,33 @@ angular.module('RadialGaugeDemo').controller('RadialGaugeDemoCtrl', ['$scope', '
         {
             min: 0,
             max: 1.5,
-            color: '#DEDEDE'
+            color: "#DEDEDE"
         },
         {
             min: 1.5,
             max: 2.5,
-            color: '#8DCA2F'
+            color: "#8DCA2F"
         },
         {
             min: 2.5,
             max: 3.5,
-            color: '#FDC702'
+            color: "#FDC702"
         },
         {
             min: 3.5,
             max: 4.5,
-            color: '#FF7700'
+            color: "#FF7700"
         },
         {
             min: 4.5,
             max: 6.0,
-            color: '#C50200'
+            color: "#C50200"
         }
     ];
     $scope.OnClick = async function () {
         console.log("click");
         const uri = await exportSvg.toSvgDataUri(document.getElementsByTagName("svg")[0], null);
-        const img = '<img class="img-thumbnail" src="' + uri + '">';
+        const img = `<img class="img-thumbnail" src="${uri}">`;
         d3.select("#svgpreview").html(img);
     }
 }]);     

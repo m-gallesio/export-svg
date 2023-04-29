@@ -67,8 +67,8 @@ export function createStylesheet(
     this: void,
     css: string
 ): HTMLStyleElement {
-    const style = document.createElement('style');
-    style.setAttribute('type', 'text/css');
+    const style = document.createElement("style");
+    style.setAttribute("type", "text/css");
     style.innerHTML = css;
     return style;
 }
