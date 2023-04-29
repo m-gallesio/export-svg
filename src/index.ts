@@ -18,6 +18,8 @@ export {
 } from "./renderFull";
 
 export {
+    download,
+
     downloadSvg,
     downloadSvgAsRaster
 } from "./download";

@@ -2,7 +2,7 @@ import type { SvgExportOptions } from "./interfaces";
 import { svgToInlinedSvgDataUri } from "./render";
 import { svgToRasterBlob } from "./renderFull";
 
-async function download(
+export async function download(
     this: void,
     name: string,
     content: string | Blob

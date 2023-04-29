@@ -56,7 +56,13 @@ All functions are made available:
 *All* rendering and download methods inline all external resources into the SVG before exporting it,
 thus making it fully standalone.
 
-## Rendering functions
+## Main functions
+
+These functions cover the most basic use cases, which are:
+- rendering a SVG
+- downloading a SVG
+
+### Rendering functions
 
 Rendering functions convert a SVG into another form.
 The all are in the form `function(svgElement: SVGGraphicsElement, options)`
@@ -68,7 +74,7 @@ Note that this does *not* modify the original SVG.
 - `svgToRasterDataUri`: converts a SVG element to a raster image (PNG by default) as a data URI
 - `svgToRasterBlob`: converts a SVG element to a raster image (PNG by default) as a `Blob`
 
-## Download functions
+### Download functions
 
 Download methods render the image and download it directly.
 They all are in the form `function(svgElement, fileName, options)`
@@ -95,3 +101,38 @@ Creates a `HTMLCanvasElement` (`<canvas>`) tailored to the given image and draws
 Gets the content of a canvas as a data URI.
 5. `canvasToRasterBlob(canvas: HTMLCanvasElement, options?): Promise<Blob>`
 Gets the content of a canvas as a `Blob`.
+6. `download(name: string, content: string | Blob)`
+Downloads the given content (data URI or `Blob`) with the given file name.
+
+### Default pipelines
+
+Note that all "main" functions are simply shortcuts for:
+
+- `svgToInlinedSvgDataUri`: `svgToInlinedSvg` | `inlinedSvgToDataUri`
+- `svgToRasterDataUri`: `svgToInlinedSvg` | `inlinedSvgToDataUri` | `dataUriToImage` | `imageToCanvas` | `canvasToRasterDataUri`
+- `svgToRasterBlob`: `svgToInlinedSvg` | `inlinedSvgToDataUri` | `dataUriToImage` | `imageToCanvas` | `canvasToRasterBlob`
+
+Download methods render the image and download it directly.
+They all are in the form `function(svgElement, fileName, options)`
+and return a `Promise` which resolves with no result.
+
+- `downloadSvg`: `svgToInlinedSvg` | `inlinedSvgToDataUri` | `download`
+- `downloadRaster`: `svgToInlinedSvg` | `inlinedSvgToDataUri` | `dataUriToImage` | `imageToCanvas` | `canvasToRasterBlob` | `download`
+
+### Customized pipeline
+
+As an example, if for some reason you need to alter the canvas before exporting it you can express it as such:
+
+```js
+
+const svg = document.getElementById("mySvgElement");
+const dataUri = await svgToInlinedSvgDataUri(svg);
+const image = await dataUriAsImage(dataUri);
+const canvas = imageToCanvas(image);
+
+// do something with the canvas
+
+const pngUri = canvasToRasterDataUri(canvas);
+download("myEditedImage.png", pngUri);
+
+```
