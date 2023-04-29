@@ -1,14 +1,11 @@
+/** @internal */
+
+export type Nullable<T> = T | null | undefined;
+
 export interface FontInfo {
     text: string;
     format: string;
     url: string;
-}
-
-export interface CanvasEncoderOptions {
-    /// A Number between 0 and 1 indicating image quality. The default is 0.8
-    quality?: number;
-    /// A string indicating the image format. The default type is image/png.
-    type?: string;
 }
 
 export interface FontOptions {
@@ -35,7 +32,7 @@ export interface CssOptions extends FontOptions {
     selectorRemap?(selector: string): string;
 }
 
-export interface SvgExportOptions extends CanvasEncoderOptions, CssOptions {
+export interface SvgToInlinedSvgOptions extends CssOptions {
     /// Creates a PNG with the given background color. Defaults to transparent.
     backgroundColor?: string;
     /// Exclude all CSS rules
@@ -52,10 +49,22 @@ export interface SvgExportOptions extends CanvasEncoderOptions, CssOptions {
     top?: number;
     /// Specify the image's width. Defaults to the viewbox's width if given, or the element's non-percentage width, or the element's bounding box's width, or the element's CSS width, or the computed style's width, or 0.
     width?: number;
+}
+
+export interface ImageToCanvasOptions {
     /// Settings used in the creation of the canvas's 2D rendering context.
     canvasSettings?: CanvasRenderingContext2DSettings;
 }
 
-/** @internal */
+export interface CanvasEncoderOptions {
+    /// A Number between 0 and 1 indicating image quality. The default is 0.8
+    quality?: number;
+    /// A string indicating the image format. The default type is image/png.
+    type?: string;
+}
 
-export type Nullable<T> = T | null | undefined;
+export interface SvgExportOptions extends
+    CanvasEncoderOptions,
+    ImageToCanvasOptions,
+    SvgToInlinedSvgOptions {
+}

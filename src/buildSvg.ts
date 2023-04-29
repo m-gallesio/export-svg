@@ -1,7 +1,7 @@
 import { inlineCss } from "./inline/inlineCss";
 import { inlineImages } from "./inline/inlineImages";
 import { createStylesheet } from "./inline/styleSheetCache";
-import type { SvgExportOptions, Nullable } from "./interfaces";
+import type { SvgToInlinedSvgOptions, Nullable } from "./interfaces";
 import { svgNs, xmlNs, xlinkNs, xhtmlNs } from "./namespaces";
 
 function getDimension(
@@ -60,11 +60,11 @@ function ensureAttributeNS(
     }
 }
 
-export async function toSvgText(
+export async function svgToInlinedSvg(
     this: void,
     el: SVGGraphicsElement,
-    options?: Nullable<SvgExportOptions>
-): Promise<string> {
+    options?: Nullable<SvgToInlinedSvgOptions>
+): Promise<SVGSVGElement> {
 
     if (!(el instanceof HTMLElement || el instanceof SVGElement))
         throw new Error(`an HTMLElement or SVGElement is required; got ${el}`);
@@ -112,6 +112,6 @@ export async function toSvgText(
         defs.appendChild(style);
         svg.insertBefore(defs, svg.firstChild);
     }
-
-    return svg.outerHTML.replace(/NS\d+:href/gi, `xmlns:xlink="${xlinkNs}" xlink:href`);
+    
+    return svg;
 }

@@ -1,14 +1,23 @@
-import { toSvgText } from "./buildSvg";
-import { downloadRaster, downloadSvg } from "./download";
-import { toCanvas, toImage, toRasterBlob, toRasterDataUri, toSvgDataUri } from "./render";
+export {
+    svgToInlinedSvg
+} from "./buildSvg";
 
-export default Object.freeze({
-    toSvgText,
-    toSvgDataUri,
-    toImage,
-    toCanvas,
-    toRasterDataUri,
-    toRasterBlob,
+export {
+    inlinedSvgToDataUri,
+    dataUriToImage,
+    imageToCanvas,
+    canvasToRasterDataUri,
+    canvasToRasterBlob,
+
+    svgToInlinedSvgDataUri
+} from "./render";
+
+export {
+    svgToRasterDataUri,
+    svgToRasterBlob
+} from "./renderFull";
+
+export {
     downloadSvg,
-    downloadRaster
-});
+    downloadSvgAsRaster
+} from "./download";

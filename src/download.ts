@@ -1,29 +1,26 @@
 import type { SvgExportOptions } from "./interfaces";
-import { toSvgDataUri, toRasterDataUri } from "./render";
+import { svgToInlinedSvgDataUri } from "./render";
+import { svgToRasterBlob } from "./renderFull";
 
 async function download(
     this: void,
     name: string,
-    uri: string
+    content: string | Blob
 ): Promise<void> {
     const saveLink = document.createElement("a");
     saveLink.download = name;
     saveLink.style.display = "none";
     document.body.appendChild(saveLink);
-    try {
-        const data = await fetch(uri);
-        const blob = await data.blob();
-        const url = URL.createObjectURL(blob);
-        saveLink.href = url;
-        saveLink.onclick = () => requestAnimationFrame(() => URL.revokeObjectURL(url));
-    }
-    catch (e) {
-        console.error(e);
-        console.warn("Error while getting object URL. Falling back to string URL.");
-        saveLink.href = uri;
-    }
+    const blob = content instanceof Blob
+        ? content
+        : await (await fetch(content)).blob();
+    const url = URL.createObjectURL(blob);
+    saveLink.href = url;
+    saveLink.onclick = () => requestAnimationFrame(() => {
+        document.body.removeChild(saveLink);
+        URL.revokeObjectURL(url);
+    });
     saveLink.click();
-    document.body.removeChild(saveLink);
 }
 
 export async function downloadSvg(
@@ -32,14 +29,14 @@ export async function downloadSvg(
     name: string,
     options: SvgExportOptions
 ): Promise<void> {
-    return download(name, await toSvgDataUri(el, options));
+    return download(name, await svgToInlinedSvgDataUri(el, options));
 }
 
-export async function downloadRaster(
+export async function downloadSvgAsRaster(
     this: void,
     el: SVGGraphicsElement,
     name: string,
     options: SvgExportOptions
 ): Promise<void> {
-    return download(name, await toRasterDataUri(el, options));
+    return download(name, await svgToRasterBlob(el, options));
 }

@@ -1,5 +1,5 @@
-import type { SvgExportOptions, Nullable, CanvasEncoderOptions } from "./interfaces";
-import { toSvgText } from "./buildSvg";
+import type { CanvasEncoderOptions, ImageToCanvasOptions, SvgExportOptions, Nullable } from "./interfaces";
+import { svgToInlinedSvg } from "./buildSvg";
 
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [<!ENTITY nbsp "&#160;">]>';
 
@@ -16,40 +16,43 @@ function reEncode(
     );
 }
 
-export async function toSvgDataUri(
+export function inlinedSvgToDataUri(
+    this: void,
+    el: SVGElement
+): string {
+    return `data:image/svg+xml;base64,${window.btoa(reEncode(doctype + el.outerHTML))}`;
+}
+
+export async function svgToInlinedSvgDataUri(
     this: void,
     el: SVGGraphicsElement,
     options?: Nullable<SvgExportOptions>
 ): Promise<string> {
-    const image = await toSvgText(el, options);
-    return `data:image/svg+xml;base64,${window.btoa(reEncode(doctype + image))}`;
+    const svg = await svgToInlinedSvg(el, options);
+    return inlinedSvgToDataUri(svg);
 }
 
-export async function toImage(
+export async function dataUriToImage(
     this: void,
-    el: SVGGraphicsElement,
-    options?: Nullable<SvgExportOptions>
+    dataUri: string
 ): Promise<HTMLImageElement> {
-    const data = await toSvgDataUri(el, options);
     return new Promise((resolve, reject) => {
         const image = new Image();
         image.onload = () => {
             resolve(image);
         };
         image.onerror = () => {
-            reject(`Error loading SVG data uri as image:\n${window.atob(data.slice(26))}Open the following link to see browser's diagnosis\n${data}`);
+            reject(`Error loading data uri as image:\n${window.atob(dataUri.slice(26))}Open the following link to see browser's diagnosis\n${dataUri}`);
         };
-        image.src = data;
+        image.src = dataUri;
     });
 }
 
-export async function toCanvas(
+export function imageToCanvas(
     this: void,
-    el: SVGGraphicsElement,
-    options?: Nullable<SvgExportOptions>,
-): Promise<HTMLCanvasElement> {
-    const img = await toImage(el, options);
-
+    img: HTMLImageElement,
+    options?: Nullable<ImageToCanvasOptions>,
+): HTMLCanvasElement {
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d", options && options.canvasSettings || undefined)!;
     // this should ensure the exported image has the same size regardless of the device
@@ -67,7 +70,7 @@ export async function toCanvas(
 
 function ensureOptions(
     this: void,
-    options?: SvgExportOptions
+    options?: CanvasEncoderOptions
 ): CanvasEncoderOptions {
     options = options || {};
     options.type = options.type || "image/png";
@@ -75,12 +78,11 @@ function ensureOptions(
     return options;
 }
 
-export async function toRasterDataUri(
+export function canvasToRasterDataUri(
     this: void,
-    el: SVGGraphicsElement,
-    options?: SvgExportOptions
-): Promise<string> {
-    const canvas = await toCanvas(el, options);
+    canvas: HTMLCanvasElement,
+    options?: CanvasEncoderOptions
+): string {
     const { type, quality } = ensureOptions(options);
     return canvas.toDataURL(
         type,
@@ -88,12 +90,11 @@ export async function toRasterDataUri(
     );
 }
 
-export async function toRasterBlob(
+export async function canvasToRasterBlob(
     this: void,
-    el: SVGGraphicsElement,
-    options?: SvgExportOptions
+    canvas: HTMLCanvasElement,
+    options?: CanvasEncoderOptions
 ): Promise<Blob> {
-    const canvas = await toCanvas(el, options);
     const { type, quality } = ensureOptions(options);
     return new Promise((resolve, reject) => {
         canvas.toBlob(
