@@ -37,14 +37,13 @@ function inlineTest(title, selector, saveOptions, testOptions) {
         .then(uri => {
             element.querySelector(".preview").innerHTML = `<div><img src="${uri}" /></div>`;
         });
-    element.querySelector(".save").onclick = () => exportSvg
-        .downloadRaster(canvas, "test.png", saveOptions);
+    element.querySelector(".save").onclick = () => {
+        exportSvg.downloadRaster(canvas, "test.png", saveOptions);
+    };
 }
 
 inlineTest("Directly in the HTML", "#inline");
-// TODO: BROKEN
 inlineTest("With linked PNG image", "#embedded-png");
-// TODO: BROKEN
 inlineTest("With linked SVG image", "#embedded-svg");
 inlineTest("Sized with pixels", "#sized-with-pixels");
 inlineTest("Sized with style", "#sized-with-style");

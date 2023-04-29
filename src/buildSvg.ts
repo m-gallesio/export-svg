@@ -20,16 +20,16 @@ function getDimension(
 
 function getDimensions(
     this: void,
-    el: SVGElement,
+    el: SVGGraphicsElement,
     w: Nullable<number>,
     h: Nullable<number>,
     clone: typeof el
-): { width: number; height: number; image: SVGSVGElement; } {
+): { width: number; height: number; svg: SVGSVGElement; } {
     if (el instanceof SVGSVGElement) {
         return {
             width: w || getDimension(el, "width"),
             height: h || getDimension(el, "height"),
-            image: clone as SVGSVGElement
+            svg: clone as SVGSVGElement
         };
     }
     if (el instanceof SVGGraphicsElement) {
@@ -42,7 +42,7 @@ function getDimensions(
         return {
             width: bb.x + bb.width,
             height: bb.y + bb.height,
-            image: svg
+            svg
         };
     }
     throw new TypeError("Attempted to render non-SVG element");
@@ -84,38 +84,34 @@ export async function toSvgText(
     await inlineImages(clone);
     clone.style.backgroundColor = backgroundColor || el.style.backgroundColor;
 
-    const { image, width, height } = getDimensions(el, w, h, clone);
+    const { svg, width, height } = getDimensions(el, w, h, clone);
 
-    image.setAttribute("version", "1.1");
-    image.setAttribute("viewBox", [left, top, width, height].join(" "));
-    ensureAttributeNS(image, xmlNs, "xmlns", svgNs);
-    ensureAttributeNS(image, xmlNs, "xmlns:xlink", xlinkNs);
+    svg.setAttribute("version", "1.1");
+    svg.setAttribute("viewBox", [left, top, width, height].join(" "));
+    ensureAttributeNS(svg, xmlNs, "xmlns", svgNs);
+    ensureAttributeNS(svg, xmlNs, "xmlns:xlink", xlinkNs);
 
     if (responsive) {
-        image.removeAttribute("width");
-        image.removeAttribute("height");
-        image.setAttribute("preserveAspectRatio", "xMinYMin meet");
+        svg.removeAttribute("width");
+        svg.removeAttribute("height");
+        svg.setAttribute("preserveAspectRatio", "xMinYMin meet");
     }
     else {
-        image.setAttribute("width", (width * scale).toString());
-        image.setAttribute("height", (height * scale).toString());
+        svg.setAttribute("width", (width * scale).toString());
+        svg.setAttribute("height", (height * scale).toString());
     }
 
-    for (const foreignObject of image.querySelectorAll("foreignObject > *")) {
+    for (const foreignObject of svg.querySelectorAll("foreignObject > *")) {
         ensureAttributeNS(foreignObject, xmlNs, "xmlns", foreignObject.tagName === "svg" ? svgNs : xhtmlNs);
     }
 
-    const outer = document.createElement("div");
-
     if (!excludeCss) {
-        const css = await inlineCss(el, options);
+        const css = await inlineCss(clone, options);
         const style = createStylesheet(`<![CDATA[\n${css}\n]]>`);
         const defs = document.createElement("defs");
         defs.appendChild(style);
-        image.insertBefore(defs, image.firstChild);
+        svg.insertBefore(defs, svg.firstChild);
     }
 
-    outer.appendChild(image);
-
-    return outer.innerHTML.replace(/NS\d+:href/gi, `xmlns:xlink="${xlinkNs}" xlink:href`);
+    return svg.outerHTML.replace(/NS\d+:href/gi, `xmlns:xlink="${xlinkNs}" xlink:href`);
 }

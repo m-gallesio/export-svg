@@ -11,6 +11,7 @@ function isExternal(
 
 function inlineImage(
     this: void,
+    image: SVGImageElement,
     href: string
 ): Promise<void> {
     return new Promise<void>((resolve, reject) => {
@@ -22,7 +23,8 @@ function inlineImage(
             canvas.width = img.width;
             canvas.height = img.height;
             canvas.getContext("2d")!.drawImage(img, 0, 0);
-            img.setAttributeNS(xlinkNs, "href", canvas.toDataURL("image/png"));
+            image.removeAttribute("href");
+            image.setAttributeNS(xlinkNs, "href", canvas.toDataURL("image/png"));
             resolve();
         };
         img.src = href;
@@ -40,7 +42,7 @@ export function inlineImages(
             if (isExternal(href)) {
                 href += (href.indexOf("?") === -1 ? "?" : "&") + "t=" + new Date().valueOf();
             }
-            toLoad.push(inlineImage(href));
+            toLoad.push(inlineImage(image, href));
         }
     }
     return Promise.all(toLoad);
