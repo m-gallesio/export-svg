@@ -15,8 +15,7 @@ Essentially, a browser compatible with [ES2017/ES8](https://caniuse.com/sr_es8) 
 
 TODO:
 - handle multiple font urls (under a flag since it costs bandwidth)
-- more export types, e.g. blob
-- hook to post-process canvas
+- review responsive flag
 
 # Example usage
 
@@ -24,9 +23,9 @@ Via import:
 
 ```javascript
 
-import { exportSvg } from "export-svg";
+import { downloadSvgAsRaster } from "export-svg";
 
-exportSvg.downloadRaster(document.getElementById("mySvgElement"));
+downloadSvgAsRaster(document.getElementById("mySvgElement"));
 
 ```
 
@@ -38,7 +37,7 @@ Via `script` tag:
 
 <script>
 
-exportSvg.downloadRaster(document.getElementById("mySvgElement"));
+exportSvg.downloadSvgAsRaster(document.getElementById("mySvgElement"));
 
 </script>
 
@@ -50,21 +49,49 @@ Please note that this package **IS STILL IN ALPHA** and its API is not yet fully
 so versions earlier than the eventual 1.0.0 **WILL** break without warning.
 Use it at your own risk and feel free to report any issues or ideas.
 
-## Rendering methods
+All functions are made available:
+- when using modules: as direct imports
+- when using `script` tags: as methods of a global `exportSvg` object
 
-Rendering methods convert a SVG into another form.
-The all are in the form `exportSvg.method(svgElement, options)` and return a `Promise` which resolves with the rendered image, whose format depends on the method.
+*All* rendering and download methods inline all external resources into the SVG before exporting it,
+thus making it fully standalone.
 
-The methods are:
-- `toSvgDataUri`: converts a SVG element to a data URI
-- `toRasterDataUri`: converts a SVG element to a raster image (PNG by default) as a data URI
-- `toRasterBlob`: converts a SVG element to a raster image (PNG by default) as a `Blob`
+## Rendering functions
 
-## Download methods
+Rendering functions convert a SVG into another form.
+The all are in the form `function(svgElement: SVGGraphicsElement, options)`
+and return a `Promise` which resolves with the rendered image,
+whose format depends on the method.
+Note that this does *not* modify the original SVG.
+
+- `svgToInlinedSvgDataUri`: converts a SVG element to a data URI
+- `svgToRasterDataUri`: converts a SVG element to a raster image (PNG by default) as a data URI
+- `svgToRasterBlob`: converts a SVG element to a raster image (PNG by default) as a `Blob`
+
+## Download functions
 
 Download methods render the image and download it directly.
-They all are in the form `downloadSvg(svgElement, fileName, options)` and return a `Promise` which resolves with no result.
+They all are in the form `function(svgElement, fileName, options)`
+and return a `Promise` which resolves with no result.
 
-The methods are:
 - `downloadSvg`: downloads the SVG
 - `downloadRaster`: converts the SVG to a raster image (PNG by default) and downloads it
+
+## Intermediate rendering pipeline
+
+All steps of the internal rendering pipeline are exported as functions.
+They should not usually be needed unless you are interested in intermediate results
+(e.g. obtaining the drawing canvas or an `img` element).
+
+1. `svgToInlinedSvg(svgElement: SVGGraphicsElement, options?): Promise<SVGSVGElement>`
+Inlines all external resources into the SVG.
+2. `inlinedSvgToDataUri(svgElement: SVGElement): string`
+Converts a SVG element (assumed to be already inlined) to a data URI.
+3. `dataUriToImage(dataUri: string): Promise<HTMLImageElement>`
+Creates a `HTMLImageElement` (`<img>`) with the given data URI as its `src`.
+4. `imageToCanvas(image: HTMLImageElement, options?): HTMLCanvasElement`
+Creates a `HTMLCanvasElement` (`<canvas>`) tailored to the given image and draws the image on it.
+5. `canvasToRasterDataUri(canvas: HTMLCanvasElement, options?): string`
+Gets the content of a canvas as a data URI.
+5. `canvasToRasterBlob(canvas: HTMLCanvasElement, options?): Promise<Blob>`
+Gets the content of a canvas as a `Blob`.

@@ -8,13 +8,14 @@ document.getElementById("file").addEventListener("change", function handleFileSe
     reader.onload = e => {
         element.querySelector(".load-target").innerHTML = e.target.result;
         exportSvg
-            .toRasterDataUri(element.querySelector(".load-target svg"), null)
+            .svgToRasterDataUri(element.querySelector(".load-target svg"), null)
             .then(uri => {
                 element.querySelector("input").style.display = "none";
                 element.querySelector(".preview").innerHTML = `<div><img src="${uri}" /></div>`;
             });
-        element.querySelector(".save").onclick = () => exportSvg
-            .downloadRaster(element.querySelector(".load-target svg"), "test.png")
+        element.querySelector(".save").onclick = () => {
+            exportSvg.downloadSvgAsRaster(element.querySelector(".load-target svg"), "test.png");
+        }
     };
     reader.readAsText(file);
 }, false);
@@ -33,12 +34,12 @@ function inlineTest(title, selector, saveOptions, testOptions) {
 
     const canvas = element.querySelector(testOptions && testOptions.selector || "svg");
     exportSvg
-        .toRasterDataUri(canvas, saveOptions)
+        .svgToRasterDataUri(canvas, saveOptions)
         .then(uri => {
             element.querySelector(".preview").innerHTML = `<div><img src="${uri}" /></div>`;
         });
     element.querySelector(".save").onclick = () => {
-        exportSvg.downloadRaster(canvas, "test.png", saveOptions);
+        exportSvg.downloadSvgAsRaster(canvas, "test.png", saveOptions);
     };
 }
 
@@ -82,7 +83,6 @@ inlineTest("When using HTML entites", "#entities");
 inlineTest("Transformed text", "#transformed-text");
 inlineTest("With marker-end", "#marker-end");
 inlineTest("SVG style attribute", "#style-background");
-// TODO: BROKEN
 inlineTest("SVG within SVG", "#svg-in-svg");
 inlineTest("excluding unused CSS", "#exclude-unused-css", { excludeUnusedCss: true });
 inlineTest("With custom fonts", "#custom-font");
@@ -99,13 +99,14 @@ sandbox.querySelector(".render").addEventListener("click", () => {
     const canvas = sandbox.querySelector(".load-target svg");
     const preview = sandbox.querySelector(".preview");
     exportSvg
-        .toRasterDataUri(canvas, null)
+        .svgToRasterDataUri(canvas, null)
         .then(uri => {
             preview.innerHTML = `<div><img src="${uri}" /></div>`;
             sandbox.querySelector(".save").onclick = () => {
-                exportSvg.downloadRaster(canvas, "test.png");
+                exportSvg.downloadSvgAsRaster(canvas, "test.png");
             };
-        }).catch(err => {
+        })
+        .catch(err => {
             error.innerText = err.message;
             error.style.display = "block";
             preview.innerHTML = "";

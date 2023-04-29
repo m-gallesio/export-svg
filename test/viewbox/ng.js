@@ -427,7 +427,7 @@ angular.module("RadialGaugeDemo").controller("RadialGaugeDemoCtrl", ["$scope", "
     ];
     $scope.OnClick = async function () {
         console.log("click");
-        const uri = await exportSvg.toSvgDataUri(document.getElementsByTagName("svg")[0], null);
+        const uri = await exportSvg.svgToRasterDataUri(document.getElementsByTagName("svg")[0]);
         const img = `<img class="img-thumbnail" src="${uri}">`;
         d3.select("#svgpreview").html(img);
     }
