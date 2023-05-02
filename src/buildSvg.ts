@@ -1,6 +1,6 @@
 import { inlineCss } from "./inline/inlineCss";
 import { inlineImages } from "./inline/inlineImages";
-import { createStylesheet } from "./inline/styleSheetCache";
+import { createStylesheet } from "./inline/styleSheetHelper";
 import type { SvgToInlinedSvgOptions } from "./interfaces";
 import { svgNs, xmlNs, xlinkNs, xhtmlNs } from "./namespaces";
 

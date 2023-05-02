@@ -102,14 +102,12 @@
         }
         return null;
     }
-    let styleCache;
     async function getStyleSheets() {
-        styleCache = styleCache || await Promise
+        return Promise
             .all(Array.from(document.styleSheets)
             .filter(sheet => !sheet.media || window.matchMedia(sheet.media.toString()).matches)
             .map(loadStyleSheetRules))
             .then(all => all.filter(x => x));
-        return styleCache;
     }
     function createStylesheet(css) {
         const style = document.createElement("style");

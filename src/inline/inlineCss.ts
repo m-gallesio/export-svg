@@ -1,6 +1,6 @@
 import { detectCssFont, inlineFonts } from "./inlineFonts";
 import type { CssOptions, FontInfo } from "../interfaces";
-import { getStyleSheets, loadRemoteStyleSheet } from "./styleSheetCache";
+import { getStyleSheets, loadRemoteStyleSheet } from "./styleSheetHelper";
 
 function query(
     this: void,

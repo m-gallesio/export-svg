@@ -44,19 +44,16 @@ async function loadStyleSheetRules(
     return null;
 }
 
-let styleCache: LoadedCssStyleSheet[];
-
 /** @internal */
 
 export async function getStyleSheets(
     this: void
 ): Promise<LoadedCssStyleSheet[]> {
-    styleCache = styleCache || await Promise
+    return Promise
         .all(Array.from(document.styleSheets)
             .filter(sheet => !sheet.media || window.matchMedia(sheet.media.toString()).matches)
             .map(loadStyleSheetRules))
         .then(all => all.filter(x => x) as LoadedCssStyleSheet[]);
-    return styleCache!;
 }
 
 /** @internal */
