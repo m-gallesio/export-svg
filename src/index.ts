@@ -1,3 +1,10 @@
+export {
+    xmlNs,
+    xhtmlNs,
+    svgNs,
+    xlinkNs
+} from "./namespaces";
+
 export type {
     FontInfo,
     FontOptions,

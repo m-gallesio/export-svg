@@ -4,6 +4,11 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.exportSvg = {}));
 })(this, (function (exports) { 'use strict';
 
+    const xmlNs = "http://www.w3.org/2000/xmlns/";
+    const xhtmlNs = "http://www.w3.org/1999/xhtml";
+    const svgNs = "http://www.w3.org/2000/svg";
+    const xlinkNs = "http://www.w3.org/1999/xlink";
+
     const urlRegex = /url\(["']?(.+?)["']?\)/;
     const fontFormats = Object.freeze({
         woff2: "font/woff2",
@@ -218,11 +223,6 @@
         return acc.css.join("\n") + fontCss;
     }
 
-    const xmlNs = "http://www.w3.org/2000/xmlns/";
-    const xhtmlNs = "http://www.w3.org/1999/xhtml";
-    const svgNs = "http://www.w3.org/2000/svg";
-    const xlinkNs = "http://www.w3.org/1999/xlink";
-
     function isExternal(url) {
         return Boolean(url && url.lastIndexOf("http", 0) === 0 && url.lastIndexOf(window.location.host) === -1);
     }
@@ -430,9 +430,13 @@
     exports.downloadSvgAsRaster = downloadSvgAsRaster;
     exports.imageToCanvas = imageToCanvas;
     exports.inlinedSvgToDataUri = inlinedSvgToDataUri;
+    exports.svgNs = svgNs;
     exports.svgToInlinedSvg = svgToInlinedSvg;
     exports.svgToInlinedSvgDataUri = svgToInlinedSvgDataUri;
     exports.svgToRasterBlob = svgToRasterBlob;
     exports.svgToRasterDataUri = svgToRasterDataUri;
+    exports.xhtmlNs = xhtmlNs;
+    exports.xlinkNs = xlinkNs;
+    exports.xmlNs = xmlNs;
 
 }));

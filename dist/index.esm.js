@@ -1,3 +1,8 @@
+const xmlNs = "http://www.w3.org/2000/xmlns/";
+const xhtmlNs = "http://www.w3.org/1999/xhtml";
+const svgNs = "http://www.w3.org/2000/svg";
+const xlinkNs = "http://www.w3.org/1999/xlink";
+
 const urlRegex = /url\(["']?(.+?)["']?\)/;
 const fontFormats = Object.freeze({
     woff2: "font/woff2",
@@ -212,11 +217,6 @@ async function inlineCss(el, options) {
     return acc.css.join("\n") + fontCss;
 }
 
-const xmlNs = "http://www.w3.org/2000/xmlns/";
-const xhtmlNs = "http://www.w3.org/1999/xhtml";
-const svgNs = "http://www.w3.org/2000/svg";
-const xlinkNs = "http://www.w3.org/1999/xlink";
-
 function isExternal(url) {
     return Boolean(url && url.lastIndexOf("http", 0) === 0 && url.lastIndexOf(window.location.host) === -1);
 }
@@ -416,4 +416,4 @@ async function downloadSvgAsRaster(el, name, options) {
     return download(name, await svgToRasterBlob(el, options));
 }
 
-export { canvasToRasterBlob, canvasToRasterDataUri, dataUriToImage, download, downloadSvg, downloadSvgAsRaster, imageToCanvas, inlinedSvgToDataUri, svgToInlinedSvg, svgToInlinedSvgDataUri, svgToRasterBlob, svgToRasterDataUri };
+export { canvasToRasterBlob, canvasToRasterDataUri, dataUriToImage, download, downloadSvg, downloadSvgAsRaster, imageToCanvas, inlinedSvgToDataUri, svgNs, svgToInlinedSvg, svgToInlinedSvgDataUri, svgToRasterBlob, svgToRasterDataUri, xhtmlNs, xlinkNs, xmlNs };
