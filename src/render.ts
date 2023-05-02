@@ -28,7 +28,7 @@ export function inlinedSvgToDataUri(
 export async function svgToInlinedSvgDataUri(
     this: void,
     el: SVGGraphicsElement,
-    options?: SvgExportOptions | null
+    options?: Readonly<SvgExportOptions> | null
 ): Promise<string> {
     const svg = await svgToInlinedSvg(el, options);
     return inlinedSvgToDataUri(svg);
@@ -55,7 +55,7 @@ export async function dataUriToImage(
 export function imageToCanvas(
     this: void,
     img: HTMLImageElement,
-    options?: ImageToCanvasOptions | null,
+    options?: Readonly<ImageToCanvasOptions> | null,
 ): HTMLCanvasElement {
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d", options && options.canvasSettings || undefined)!;
@@ -72,21 +72,23 @@ export function imageToCanvas(
     return canvas;
 }
 
+const defaultEncoderOptions: Readonly<CanvasEncoderOptions> = Object.freeze({
+    type: "image/png",
+    quality: .8
+});
+
 function ensureOptions(
     this: void,
-    options?: CanvasEncoderOptions
-): CanvasEncoderOptions {
-    options = options || {};
-    options.type = options.type || "image/png";
-    options.quality = options.quality || .8;
-    return options;
+    options: Readonly<CanvasEncoderOptions> | null | undefined
+): Readonly<CanvasEncoderOptions> {
+    return Object.assign({}, defaultEncoderOptions, options);
 }
 
 /** Gets the content of a canvas as a data URI. */
 export function canvasToRasterDataUri(
     this: void,
     canvas: HTMLCanvasElement,
-    options?: CanvasEncoderOptions
+    options?: Readonly<CanvasEncoderOptions> | null
 ): string {
     const { type, quality } = ensureOptions(options);
     return canvas.toDataURL(
@@ -99,7 +101,7 @@ export function canvasToRasterDataUri(
 export async function canvasToRasterBlob(
     this: void,
     canvas: HTMLCanvasElement,
-    options?: CanvasEncoderOptions
+    options?: Readonly<CanvasEncoderOptions> | null
 ): Promise<Blob> {
     const { type, quality } = ensureOptions(options);
     return new Promise((resolve, reject) => {

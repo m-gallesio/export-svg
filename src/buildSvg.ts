@@ -65,7 +65,7 @@ function ensureAttributeNS(
 export async function svgToInlinedSvg(
     this: void,
     el: SVGGraphicsElement,
-    options?: SvgToInlinedSvgOptions | null
+    options?: Readonly<SvgToInlinedSvgOptions> | null
 ): Promise<SVGSVGElement> {
 
     if (!(el instanceof HTMLElement || el instanceof SVGElement))

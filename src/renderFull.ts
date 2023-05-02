@@ -4,7 +4,7 @@ import { canvasToRasterBlob, canvasToRasterDataUri, dataUriToImage, imageToCanva
 async function svgToCanvas(
     this: void,
     el: SVGGraphicsElement,
-    options?: SvgExportOptions | null
+    options: Readonly<SvgExportOptions> | null | undefined
 ): Promise<HTMLCanvasElement> {
     const dataUri = await svgToInlinedSvgDataUri(el, options);
     const image = await dataUriToImage(dataUri);
@@ -15,7 +15,7 @@ async function svgToCanvas(
 export async function svgToRasterDataUri(
     this: void,
     el: SVGGraphicsElement,
-    options?: SvgExportOptions
+    options?: Readonly<SvgExportOptions> | null
 ): Promise<string> {
     return canvasToRasterDataUri(await svgToCanvas(el, options), options);
 }
@@ -24,7 +24,7 @@ export async function svgToRasterDataUri(
 export async function svgToRasterBlob(
     this: void,
     el: SVGGraphicsElement,
-    options?: SvgExportOptions
+    options?: Readonly<SvgExportOptions> | null
 ): Promise<Blob> {
     return canvasToRasterBlob(await svgToCanvas(el, options), options);
 }

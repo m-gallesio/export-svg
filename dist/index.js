@@ -369,11 +369,12 @@
         context.drawImage(img, 0, 0);
         return canvas;
     }
+    const defaultEncoderOptions = Object.freeze({
+        type: "image/png",
+        quality: .8
+    });
     function ensureOptions(options) {
-        options = options || {};
-        options.type = options.type || "image/png";
-        options.quality = options.quality || .8;
-        return options;
+        return Object.assign({}, defaultEncoderOptions, options);
     }
     function canvasToRasterDataUri(canvas, options) {
         const { type, quality } = ensureOptions(options);
