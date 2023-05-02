@@ -25,20 +25,22 @@ export interface CssOptions extends FontOptions {
     excludeUnusedCss?: boolean;
     /**
      * A function that takes a CSS rule's selector and properties and returns a string of CSS.
-     * Supercedes `selectorRemap` and `modifyStyle`.
      * Useful for modifying properties only for certain CSS selectors.
      */
-    modifyCss?(selector: string, properties: string): string;
-    /**
-     * A function that takes a CSS rule's properties and returns a string of CSS.
-     * Useful for modifying properties before they're inlined into the SVG.
-     */
-    modifyStyle?(properties: string): string;
-    /**
-     * A function that takes a CSS selector and produces its replacement in the CSS that's inlined into the SVG.
-     * Useful if your SVG style selectors are scoped by ancestor elements in your HTML document.
-     */
-    selectorRemap?(selector: string): string;
+    modifyCss?:
+    | ((selector: string, properties: string) => string)
+    | Readonly<{
+        /**
+         * A function that takes a CSS rule's properties and returns a string of CSS.
+         * Useful for modifying properties before they're inlined into the SVG.
+         */
+        modifyStyle?(properties: string): string;
+        /**
+         * A function that takes a CSS selector and produces its replacement in the CSS that's inlined into the SVG.
+         * Useful if your SVG style selectors are scoped by ancestor elements in your HTML document.
+         */
+        selectorRemap?(selector: string): string;
+    }>
 }
 
 export interface SvgToInlinedSvgOptions extends CssOptions {

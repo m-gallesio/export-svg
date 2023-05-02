@@ -4,7 +4,6 @@
   "author": "Matteo Gallesio, Eric Shull",
   "version": "0.1.1",
   "description": "Convert a browser SVG to PNG or dataUri",
-  "sideEffects": "false",
   "keywords": [
     "svg",
     "png",

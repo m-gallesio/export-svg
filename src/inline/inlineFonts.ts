@@ -76,7 +76,9 @@ async function loadFont(
     if (!cachedFonts[font.url]) {
         try {
             const response = await fetch(font.url);
-            const responseContent = await (response.ok ? response.arrayBuffer() : Promise.reject());
+            if (!response.ok)
+                throw new Error("Fetch error: " + response.status);
+            const responseContent = await response.arrayBuffer();
             // TODO: it may also be worth it to wait until fonts are fully loaded before
             // attempting to rasterize them. (e.g. use https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet)
             const fontInBase64 = arrayBufferToBase64(responseContent);

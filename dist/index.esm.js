@@ -55,7 +55,9 @@ async function loadFont(font) {
     if (!cachedFonts[font.url]) {
         try {
             const response = await fetch(font.url);
-            const responseContent = await (response.ok ? response.arrayBuffer() : Promise.reject());
+            if (!response.ok)
+                throw new Error("Fetch error: " + response.status);
+            const responseContent = await response.arrayBuffer();
             const fontInBase64 = arrayBufferToBase64(responseContent);
             const fontUri = font.text.replace(urlRegex, `url("data:${font.format};base64,${fontInBase64}")`) + "\n";
             cachedFonts[font.url] = fontUri;
@@ -145,15 +147,15 @@ function processCssFontFaceRule(rule, href, fontList, options) {
     }
     return true;
 }
-function processCssMediaRule(rule, el, href, accumulator, options) {
+async function processCssMediaRule(rule, el, href, accumulator, options) {
     if (window.matchMedia(rule.conditionText).matches) {
-        processRuleList(rule.cssRules, href, el, accumulator, options);
+        await processRuleList(rule.cssRules, href, el, accumulator, options);
     }
     return true;
 }
-function processCssSupportsRule(rule, el, href, accumulator, options) {
+async function processCssSupportsRule(rule, el, href, accumulator, options) {
     if ("supports" in CSS && CSS.supports(rule.conditionText)) {
-        processRuleList(rule.cssRules, href, el, accumulator, options);
+        await processRuleList(rule.cssRules, href, el, accumulator, options);
     }
     return true;
 }
@@ -176,14 +178,14 @@ async function processRuleList(rules, href, el, accumulator, options) {
         if (rule instanceof CSSStyleRule) {
             isProcessed = processCssRule(rule, el, options.generateCss, accumulator.css);
         }
+        else if (rule instanceof CSSMediaRule) {
+            isProcessed = await processCssMediaRule(rule, el, href, accumulator, options);
+        }
         else if (rule instanceof CSSFontFaceRule) {
             isProcessed = processCssFontFaceRule(rule, href, accumulator.fonts, options);
         }
-        else if (rule instanceof CSSMediaRule) {
-            isProcessed = processCssMediaRule(rule, el, href, accumulator, options);
-        }
         else if (rule instanceof CSSSupportsRule) {
-            isProcessed = processCssSupportsRule(rule, el, href, accumulator, options);
+            isProcessed = await processCssSupportsRule(rule, el, href, accumulator, options);
         }
         else if (rule instanceof CSSImportRule) {
             isProcessed = await processCssImportRule(rule, el, accumulator, options);
@@ -193,18 +195,26 @@ async function processRuleList(rules, href, el, accumulator, options) {
         }
     }
 }
+const defaultGenerateCss = (selector, properties) => `${selector}{${properties}}\n`;
+function getGenerateCss(modifyCss) {
+    if (typeof modifyCss === "function") {
+        return modifyCss;
+    }
+    if (modifyCss) {
+        const identity = (s) => s;
+        const { selectorRemap = identity, modifyStyle = identity } = modifyCss;
+        return (selector, properties) => defaultGenerateCss(selectorRemap(selector), modifyStyle(properties));
+    }
+    return defaultGenerateCss;
+}
 async function inlineCss(el, options) {
-    const { selectorRemap, modifyStyle, modifyCss, fonts, inlineAllFonts = false, excludeUnusedCss = false } = options || {};
+    const { modifyCss, fonts, inlineAllFonts = false, excludeUnusedCss = false } = options || {};
     const acc = {
         css: [],
         fonts: fonts || []
     };
     const opts = {
-        generateCss: modifyCss || ((selector, properties) => {
-            const sel = selectorRemap ? selectorRemap(selector) : selector;
-            const props = modifyStyle ? modifyStyle(properties) : properties;
-            return `${sel}{${props}}\n`;
-        }),
+        generateCss: getGenerateCss(modifyCss),
         excludeUnusedCss,
         detectFonts: !fonts,
         inlineAllFonts

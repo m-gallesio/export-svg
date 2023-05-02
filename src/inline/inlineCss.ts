@@ -2,6 +2,21 @@ import { detectCssFont, inlineFonts } from "./inlineFonts";
 import type { CssOptions, FontInfo } from "../interfaces";
 import { getStyleSheets, loadRemoteStyleSheet } from "./styleSheetHelper";
 
+interface CssLoadingAccumulator {
+    css: string[],
+    fonts: FontInfo[];
+}
+
+interface CssFontLoadingOptions {
+    detectFonts: boolean;
+    inlineAllFonts: boolean;
+}
+
+interface CssLoadingOptions extends CssFontLoadingOptions {
+    generateCss: (selector: string, properties: string) => string;
+    excludeUnusedCss: boolean;
+}
+
 function query(
     this: void,
     el: Element,
@@ -51,45 +66,30 @@ function processCssFontFaceRule(
     return true;
 }
 
-interface CssLoadingAccumulator {
-    css: string[],
-    fonts: FontInfo[];
-}
-
-interface CssFontLoadingOptions {
-    detectFonts: boolean;
-    inlineAllFonts: boolean;
-}
-
-interface CssLoadingOptions extends CssFontLoadingOptions {
-    generateCss: (selector: string, properties: string) => string;
-    excludeUnusedCss: boolean;
-}
-
-function processCssMediaRule(
+async function processCssMediaRule(
     this: void,
     rule: CSSMediaRule,
     el: Element,
     href: string | null,
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
-): boolean {
+): Promise<boolean> {
     if (window.matchMedia(rule.conditionText).matches) {
-        processRuleList(rule.cssRules, href, el, accumulator, options);
+        await processRuleList(rule.cssRules, href, el, accumulator, options);
     }
     return true;
 }
 
-function processCssSupportsRule(
+async function processCssSupportsRule(
     this: void,
     rule: CSSSupportsRule,
     el: Element,
     href: string | null,
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
-): boolean {
+): Promise<boolean> {
     if ("supports" in CSS && CSS.supports(rule.conditionText)) {
-        processRuleList(rule.cssRules, href, el, accumulator, options);
+        await processRuleList(rule.cssRules, href, el, accumulator, options);
     }
     return true;
 }
@@ -127,14 +127,14 @@ async function processRuleList(
         if (rule instanceof CSSStyleRule) {
             isProcessed = processCssRule(rule, el, options.generateCss, accumulator.css);
         }
+        else if (rule instanceof CSSMediaRule) {
+            isProcessed = await processCssMediaRule(rule, el, href, accumulator, options);
+        }
         else if (rule instanceof CSSFontFaceRule) {
             isProcessed = processCssFontFaceRule(rule, href, accumulator.fonts, options);
         }
-        else if (rule instanceof CSSMediaRule) {
-            isProcessed = processCssMediaRule(rule, el, href, accumulator, options);
-        }
         else if (rule instanceof CSSSupportsRule) {
-            isProcessed = processCssSupportsRule(rule, el, href, accumulator, options);
+            isProcessed = await processCssSupportsRule(rule, el, href, accumulator, options);
         }
         else if (rule instanceof CSSImportRule) {
             isProcessed = await processCssImportRule(rule, el, accumulator, options);
@@ -146,6 +146,29 @@ async function processRuleList(
     }
 }
 
+const defaultGenerateCss = (selector: string, properties: string) => `${selector}{${properties}}\n`;
+
+function getGenerateCss(
+    this: void,
+    modifyCss: CssOptions["modifyCss"]
+): CssLoadingOptions["generateCss"] {
+    if (typeof modifyCss === "function") {
+        return modifyCss;
+    }
+    if (modifyCss) {
+        const identity = (s: string) => s;
+        const {
+            selectorRemap = identity,
+            modifyStyle = identity
+        } = modifyCss;
+        return (selector: string, properties: string) => defaultGenerateCss(
+            selectorRemap(selector),
+            modifyStyle(properties)
+        );
+    }
+    return defaultGenerateCss;
+}
+
 /** @internal */
 
 export async function inlineCss(
@@ -154,8 +177,6 @@ export async function inlineCss(
     options?: Readonly<CssOptions> | null
 ): Promise<string> {
     const {
-        selectorRemap,
-        modifyStyle,
         modifyCss,
         fonts,
         inlineAllFonts = false,
@@ -168,11 +189,7 @@ export async function inlineCss(
     };
 
     const opts: CssLoadingOptions = {
-        generateCss: modifyCss || ((selector: string, properties: string) => {
-            const sel = selectorRemap ? selectorRemap(selector) : selector;
-            const props = modifyStyle ? modifyStyle(properties) : properties;
-            return `${sel}{${props}}\n`;
-        }),
+        generateCss: getGenerateCss(modifyCss),
         excludeUnusedCss,
         detectFonts: !fonts,
         inlineAllFonts

@@ -9,9 +9,10 @@ export interface FontOptions {
 }
 export interface CssOptions extends FontOptions {
     excludeUnusedCss?: boolean;
-    modifyCss?(selector: string, properties: string): string;
-    modifyStyle?(properties: string): string;
-    selectorRemap?(selector: string): string;
+    modifyCss?: ((selector: string, properties: string) => string) | Readonly<{
+        modifyStyle?(properties: string): string;
+        selectorRemap?(selector: string): string;
+    }>;
 }
 export interface SvgToInlinedSvgOptions extends CssOptions {
     backgroundColor?: string;
