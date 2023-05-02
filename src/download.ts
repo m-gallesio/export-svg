@@ -29,7 +29,7 @@ export async function downloadSvg(
     this: void,
     el: SVGGraphicsElement,
     name: string,
-    options: SvgExportOptions
+    options?: Readonly<SvgExportOptions> | null
 ): Promise<void> {
     return download(name, await svgToInlinedSvgDataUri(el, options));
 }
@@ -39,7 +39,7 @@ export async function downloadSvgAsRaster(
     this: void,
     el: SVGGraphicsElement,
     name: string,
-    options: SvgExportOptions
+    options?: Readonly<SvgExportOptions> | null
 ): Promise<void> {
     return download(name, await svgToRasterBlob(el, options));
 }
