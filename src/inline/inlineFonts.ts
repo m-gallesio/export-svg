@@ -1,4 +1,5 @@
 import type { FontInfo } from "../interfaces";
+import { RemoteCache } from "./cache";
 
 const urlRegex = /url\(["']?(.+?)["']?\)/;
 const fontFormats: Readonly<Record<string, string>> = Object.freeze({
@@ -67,31 +68,20 @@ export function detectCssFont(
     };
 }
 
-const cachedFonts: Record<string, string | null> = {};
-
-async function loadFont(
-    this: void,
-    font: FontInfo
-): Promise<string | null> {
-    if (!cachedFonts[font.url]) {
-        try {
-            const response = await fetch(font.url);
-            if (!response.ok)
-                throw new Error("Fetch error: " + response.status);
-            const responseContent = await response.arrayBuffer();
-            // TODO: it may also be worth it to wait until fonts are fully loaded before
-            // attempting to rasterize them. (e.g. use https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet)
-            const fontInBase64 = arrayBufferToBase64(responseContent);
-            const fontUri = font.text.replace(urlRegex, `url("data:${font.format};base64,${fontInBase64}")`) + "\n";
-            cachedFonts[font.url] = fontUri;
-        }
-        catch (e) {
-            console.warn(`Failed to load font from: ${font.url}`, e);
-            cachedFonts[font.url] ||= "";
-        }
+const fontCache = new RemoteCache<FontInfo, string>(
+    font => font.url,
+    async function (
+        this: void,
+        font,
+        response
+    ) {
+        const contents = await response.arrayBuffer();
+        // TODO: it may also be worth it to wait until fonts are fully loaded before
+        // attempting to rasterize them. (e.g. use https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet)
+        const fontInBase64 = arrayBufferToBase64(contents);
+        return font.text.replace(urlRegex, `url("data:${font.format};base64,${fontInBase64}")`) + "\n";
     }
-    return cachedFonts[font.url];
-}
+);
 
 /** @internal */
 
@@ -99,5 +89,5 @@ export async function inlineFonts(
     this: void,
     fonts: FontInfo[]
 ): Promise<string> {
-    return (await Promise.all(fonts.map(loadFont))).join("");
+    return (await Promise.all(fonts.map(font => fontCache.get(font)))).join("");
 }

@@ -3,6 +3,31 @@ const xhtmlNs = "http://www.w3.org/1999/xhtml";
 const svgNs = "http://www.w3.org/2000/svg";
 const xlinkNs = "http://www.w3.org/1999/xlink";
 
+class RemoteCache {
+    constructor(accessor, reader) {
+        this.accessor = accessor;
+        this.reader = reader;
+        this.content = {};
+    }
+    async get(source) {
+        const url = this.accessor(source);
+        if (this.content[url])
+            return this.content[url];
+        try {
+            const response = await fetch(url);
+            if (!response.ok)
+                throw new Error("Fetch error: " + response.status);
+            const data = await this.reader(source, response);
+            this.content[url] = data;
+            return data;
+        }
+        catch (e) {
+            console.warn(`Failed to load data from: ${url}`, e);
+            return null;
+        }
+    }
+}
+
 const urlRegex = /url\(["']?(.+?)["']?\)/;
 const fontFormats = Object.freeze({
     woff2: "font/woff2",
@@ -49,47 +74,27 @@ function detectCssFont(cssText, href, inlineAllFonts) {
         url: fullUrl
     };
 }
-const cachedFonts = {};
-async function loadFont(font) {
-    var _a;
-    if (!cachedFonts[font.url]) {
-        try {
-            const response = await fetch(font.url);
-            if (!response.ok)
-                throw new Error("Fetch error: " + response.status);
-            const responseContent = await response.arrayBuffer();
-            const fontInBase64 = arrayBufferToBase64(responseContent);
-            const fontUri = font.text.replace(urlRegex, `url("data:${font.format};base64,${fontInBase64}")`) + "\n";
-            cachedFonts[font.url] = fontUri;
-        }
-        catch (e) {
-            console.warn(`Failed to load font from: ${font.url}`, e);
-            cachedFonts[_a = font.url] || (cachedFonts[_a] = "");
-        }
-    }
-    return cachedFonts[font.url];
-}
+const fontCache = new RemoteCache(font => font.url, async function (font, response) {
+    const contents = await response.arrayBuffer();
+    const fontInBase64 = arrayBufferToBase64(contents);
+    return font.text.replace(urlRegex, `url("data:${font.format};base64,${fontInBase64}")`) + "\n";
+});
 async function inlineFonts(fonts) {
-    return (await Promise.all(fonts.map(loadFont))).join("");
+    return (await Promise.all(fonts.map(font => fontCache.get(font)))).join("");
 }
 
-async function loadRemoteStyleSheet(href) {
-    try {
-        const response = await fetch(href);
-        const contents = await response.text();
-        const element = document.body.appendChild(createStylesheet(contents));
-        let loadedStyle = null;
-        if (element.sheet && element.sheet.cssRules) {
-            loadedStyle = { rules: Array.from(element.sheet.cssRules), href };
-        }
-        element.remove();
-        return loadedStyle;
-    }
-    catch (e) {
-        console.warn(`Stylesheet could not be loaded: ${href}`, e);
-        return null;
-    }
-}
+const styleCache = new RemoteCache(href => href, async function (href, response) {
+    const contents = await response.text();
+    const element = document.body.appendChild(createStylesheet(contents));
+    const loadedStyle = {
+        href,
+        rules: (element.sheet && element.sheet.cssRules)
+            ? Array.from(element.sheet.cssRules)
+            : []
+    };
+    element.remove();
+    return loadedStyle;
+});
 async function loadStyleSheetRules(sheet) {
     try {
         if (sheet.cssRules)
@@ -97,7 +102,7 @@ async function loadStyleSheetRules(sheet) {
     }
     catch (e) {
         if (sheet.href) {
-            return loadRemoteStyleSheet(sheet.href);
+            return styleCache.get(sheet.href);
         }
         console.warn(`Stylesheet could not be loaded: ${sheet.href}`, e);
     }
@@ -162,7 +167,7 @@ async function processCssSupportsRule(rule, el, href, accumulator, options) {
 async function processCssImportRule(rule, el, accumulator, options) {
     if (!rule.media.length || Array.from(rule.media).some(medium => window.matchMedia(medium).matches)) {
         try {
-            const style = await loadRemoteStyleSheet(rule.href);
+            const style = await styleCache.get(rule.href);
             if (style)
                 await processRuleList(style.rules, rule.href, el, accumulator, options);
         }

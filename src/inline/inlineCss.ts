@@ -1,6 +1,6 @@
 import { detectCssFont, inlineFonts } from "./inlineFonts";
 import type { CssOptions, FontInfo } from "../interfaces";
-import { getStyleSheets, loadRemoteStyleSheet } from "./styleSheetHelper";
+import { getStyleSheets, styleCache } from "./styleSheetHelper";
 
 interface CssLoadingAccumulator {
     css: string[],
@@ -103,7 +103,7 @@ async function processCssImportRule(
 ): Promise<boolean> {
     if (!rule.media.length || Array.from(rule.media).some(medium => window.matchMedia(medium).matches)) {
         try {
-            const style = await loadRemoteStyleSheet(rule.href);
+            const style = await styleCache.get(rule.href);
             if (style)
                 await processRuleList(style.rules, rule.href, el, accumulator, options);
         }

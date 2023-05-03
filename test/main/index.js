@@ -51,10 +51,14 @@ inlineTest("Sized with style", "#sized-with-style");
 inlineTest("Sized with CSS", "#sized-with-css");
 inlineTest("At a higher resolution", "#scaling", { scale: 2 });
 inlineTest("When CSS styling selectors are prefixed", "#selectors-prefixed", {
-    selectorRemap: s => s.replace("#selectors-prefixed ", "")
+    modifyCss: {
+        selectorRemap: s => s.replace("#selectors-prefixed ", "")
+    }
 });
 inlineTest("Modifying the style", "#modified-style", {
-    modifyStyle: s => s.replace("green", "red")
+    modifyCss: {
+        modifyStyle: s => s.replace("green", "red")
+    }
 });
 inlineTest("Modifying the whole CSS rule", "#modified-css", {
     modifyCss: (selector, properties) => {
