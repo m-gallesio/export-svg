@@ -91,7 +91,9 @@
             </div>
 
             <div style="width:50%">
-                <h3>Preview <button class="save">Save as PNG</button></h3>
+                <h3>Preview</h3>
+                <button class="saveSvg">Save as SVG</button>
+                <button class="savePng">Save as PNG</button>
             </div>
         </div>
 
@@ -107,7 +109,8 @@
 
     <h1>exportSvg</h1>
     <p>This page tests various features of exportSvg.</p>
-    <p>You can test your own SVG code in the Sandbox. If something doesn't work as expected, you can <a href="https://github.com/m-gallesio/exportSvg/issues">file an issue on GitHub</a>.</p>
+    <p>You can test your own SVG code in the Sandbox. If something doesn't work as expected, you can <a
+            href="https://github.com/m-gallesio/exportSvg/issues">file an issue on GitHub</a>.</p>
 
     <ul>
         <li id="sandbox">
@@ -156,13 +159,13 @@
 
         <li id="embedded-png">
             <svg width="200" height="200">
-                <image xlink:href="image.png" x="50" y="50" width="100" height="100"></image>
+                <image href="image.png" x="50" y="50" width="100" height="100"></image>
             </svg>
         </li>
 
         <li id="embedded-svg">
             <svg width="200" height="200">
-                <image xlink:href="test.svg" x="50" y="50" width="100" height="100"></image>
+                <image href="test.svg" x="50" y="50" width="100" height="100"></image>
             </svg>
         </li>
 
@@ -187,7 +190,7 @@
         <li id="scaling">
             <svg width="200" height="200">
                 <rect width="100" height="100" />
-                <image xlink:href="image.png" x="50" y="50" width="100" height="100"></image>
+                <image href="image.png" x="50" y="50" width="100" height="100"></image>
             </svg>
         </li>
 
@@ -268,6 +271,35 @@
             </svg>
         </li>
 
+        <li id="foreign-object-html-img">
+            <svg width="200" height="200">
+                <foreignobject x="50" y="50" width="100" height="100">
+                    <div>
+                        Foreign Object:
+                        <img src="image.png" />
+                    </div>
+                </foreignobject>
+            </svg>
+            <div style="color:red;">
+                <p>
+                    This does NOT work because img is a self-closing tag. (TODO: try to find a way.)
+                </p>
+            </div>
+        </li>
+
+        <li id="foreign-object-svg-image">
+            <svg width="200" height="200">
+                <foreignobject x="50" y="50" width="100" height="100">
+                    <div>
+                        Foreign Object:
+                        <svg>
+                            <image xlink:href="image.png" />
+                        </svg>
+                    </div>
+                </foreignobject>
+            </svg>
+        </li>
+
         <li id="xmlns-override">
             <svg width="200" height="200">
                 <foreignobject x="50" y="50" width="50" height="100">
@@ -303,7 +335,8 @@
                     </marker>
                 </defs>
                 <g transform="translate(50,50)">
-                    <path id="arrow-line" marker-end="url(#head)" stroke-width="5" fill="none" stroke="black" d="M0,0 C45,45 45,-45 90,0" />
+                    <path id="arrow-line" marker-end="url(#head)" stroke-width="5" fill="none" stroke="black"
+                        d="M0,0 C45,45 45,-45 90,0" />
                 </g>
             </svg>
         </li>
@@ -317,7 +350,7 @@
             <svg width="200" height="200">
                 <foreignObject x="50" y="50" width="50" height="100">
                     <svg width="50" height="50">
-                        <image xlink:href="test.svg" width="50" height="50"></image>
+                        <image href="test.svg" width="50" height="50"></image>
                     </svg>
                 </foreignObject>
             </svg>
@@ -331,7 +364,8 @@
 
         <li id="custom-font">
             <svg width="200" height="200">
-                <text x="100" y="100" text-anchor="middle" dy="14" style="font-family:'Stalemate';font-size:36pt;">Custom Fonts</text>
+                <text x="100" y="100" text-anchor="middle" dy="14"
+                    style="font-family:'Stalemate';font-size:36pt;">Custom Fonts</text>
             </svg>
             <div style="color:red;">
                 <p>
@@ -344,7 +378,8 @@
 
         <li id="custom-font-crossorigin-css">
             <svg width="200" height="200">
-                <text x="100" y="100" text-anchor="middle" dy="14" style="font-family:'Sacramento';font-size:36pt;">Custom Fonts</text>
+                <text x="100" y="100" text-anchor="middle" dy="14"
+                    style="font-family:'Sacramento';font-size:36pt;">Custom Fonts</text>
             </svg>
         </li>
 

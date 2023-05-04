@@ -326,8 +326,11 @@ async function svgToInlinedSvg(el, options) {
         svg.setAttribute("width", (width * scale).toString());
         svg.setAttribute("height", (height * scale).toString());
     }
-    for (const foreignObject of svg.querySelectorAll("foreignObject > *")) {
-        ensureAttributeNS(foreignObject, xmlNs, "xmlns", foreignObject.tagName === "svg" ? svgNs : xhtmlNs);
+    for (const svgContent of svg.querySelectorAll("svg")) {
+        ensureAttributeNS(svgContent, xmlNs, "xmlns", svgNs);
+    }
+    for (const htmlContent of svg.querySelectorAll("foreignObject > *:not(svg)")) {
+        ensureAttributeNS(htmlContent, xmlNs, "xmlns", xhtmlNs);
     }
     if (!excludeCss) {
         const css = await inlineCss(clone, options);

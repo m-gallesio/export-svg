@@ -103,8 +103,12 @@ export async function svgToInlinedSvg(
         svg.setAttribute("height", (height * scale).toString());
     }
 
-    for (const foreignObject of svg.querySelectorAll("foreignObject > *")) {
-        ensureAttributeNS(foreignObject, xmlNs, "xmlns", foreignObject.tagName === "svg" ? svgNs : xhtmlNs);
+    for (const svgContent of svg.querySelectorAll("svg")) {
+        ensureAttributeNS(svgContent, xmlNs, "xmlns", svgNs);
+    }
+
+    for (const htmlContent of svg.querySelectorAll("foreignObject > *:not(svg)")) {
+        ensureAttributeNS(htmlContent, xmlNs, "xmlns", xhtmlNs);
     }
 
     if (!excludeCss) {

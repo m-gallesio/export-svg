@@ -13,7 +13,7 @@ document.getElementById("file").addEventListener("change", function handleFileSe
                 element.querySelector("input").style.display = "none";
                 element.querySelector(".preview").innerHTML = `<div><img src="${uri}" /></div>`;
             });
-        element.querySelector(".save").onclick = () => {
+        element.querySelector(".savePng").onclick = () => {
             exportSvg.downloadSvgAsRaster(element.querySelector(".load-target svg"), "test.png");
         }
     };
@@ -38,8 +38,11 @@ function inlineTest(title, selector, saveOptions, testOptions) {
         .then(uri => {
             element.querySelector(".preview").innerHTML = `<div><img src="${uri}" /></div>`;
         });
-    element.querySelector(".save").onclick = () => {
+    element.querySelector(".savePng").onclick = () => {
         exportSvg.downloadSvgAsRaster(canvas, "test.png", saveOptions);
+    };
+    element.querySelector(".saveSvg").onclick = () => {
+        exportSvg.downloadSvg(canvas, "test.svg", saveOptions);
     };
 }
 
@@ -81,6 +84,8 @@ inlineTest("Pan and Zoom", "#pan-and-zoom", {
 inlineTest("With Unicode characters", "#unicode");
 inlineTest("With gradients", "#gradient");
 inlineTest("With foreign objects", "#foreign-object");
+inlineTest("With foreign objects: img", "#foreign-object-html-img");
+inlineTest("With foreign objects: image in svg", "#foreign-object-svg-image");
 inlineTest("With opacity", "#opacity");
 inlineTest("When setting xmlns on foreign object children", "#xmlns-override");
 inlineTest("When using HTML entites", "#entities");
@@ -106,7 +111,10 @@ sandbox.querySelector(".render").addEventListener("click", () => {
         .svgToRasterDataUri(canvas, null)
         .then(uri => {
             preview.innerHTML = `<div><img src="${uri}" /></div>`;
-            sandbox.querySelector(".save").onclick = () => {
+            sandbox.querySelector(".saveSvg").onclick = () => {
+                exportSvg.downloadSvg(canvas, "test.svg");
+            };
+            sandbox.querySelector(".savePng").onclick = () => {
                 exportSvg.downloadSvgAsRaster(canvas, "test.png");
             };
         })
