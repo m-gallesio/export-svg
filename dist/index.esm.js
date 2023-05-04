@@ -51,7 +51,7 @@ function arrayBufferToBase64(buffer) {
     const bytes = new Uint8Array(buffer);
     for (let i = 0; i < bytes.byteLength; i++)
         binary += String.fromCharCode(bytes[i]);
-    return window.btoa(binary);
+    return btoa(binary);
 }
 function detectCssFont(cssText, href, inlineAllFonts) {
     if (inlineAllFonts)
@@ -111,7 +111,7 @@ async function loadStyleSheetRules(sheet) {
 async function getStyleSheets() {
     return Promise
         .all(Array.from(document.styleSheets)
-        .filter(sheet => !sheet.media || window.matchMedia(sheet.media.toString()).matches)
+        .filter(sheet => !sheet.media.length || matchMedia(sheet.media.mediaText).matches)
         .map(loadStyleSheetRules))
         .then(all => all.filter(x => x));
 }
@@ -153,7 +153,7 @@ function processCssFontFaceRule(rule, href, fontList, options) {
     return true;
 }
 async function processCssMediaRule(rule, el, href, accumulator, options) {
-    if (window.matchMedia(rule.conditionText).matches) {
+    if (matchMedia(rule.conditionText).matches) {
         await processRuleList(rule.cssRules, href, el, accumulator, options);
     }
     return true;
@@ -165,7 +165,7 @@ async function processCssSupportsRule(rule, el, href, accumulator, options) {
     return true;
 }
 async function processCssImportRule(rule, el, accumulator, options) {
-    if (!rule.media.length || Array.from(rule.media).some(medium => window.matchMedia(medium).matches)) {
+    if (!rule.media.length || matchMedia(rule.media.mediaText).matches) {
         try {
             const style = await styleCache.get(rule.href);
             if (style)
@@ -233,21 +233,23 @@ async function inlineCss(el, options) {
 }
 
 function isExternal(url) {
-    return Boolean(url && url.lastIndexOf("http", 0) === 0 && url.lastIndexOf(window.location.host) === -1);
+    return Boolean(url && url.lastIndexOf("http", 0) === 0 && url.lastIndexOf(location.host) === -1);
 }
 function inlineImage(image, href) {
     return new Promise((resolve, reject) => {
-        const canvas = document.createElement("canvas");
         const img = new Image();
         img.crossOrigin = "anonymous";
-        img.onerror = () => reject(new Error(`Could not load ${href}`));
         img.onload = () => {
+            const canvas = document.createElement("canvas");
             canvas.width = img.width;
             canvas.height = img.height;
             canvas.getContext("2d").drawImage(img, 0, 0);
             image.removeAttribute("href");
             image.setAttributeNS(xlinkNs, "href", canvas.toDataURL("image/png"));
             resolve();
+        };
+        img.onerror = () => {
+            reject(new Error(`Could not load ${href}`));
         };
         img.src = href;
     });
@@ -272,7 +274,7 @@ function getDimension(el, dim) {
         ((attr = el.getAttribute(dim)) && attr.match(/%$/) && parseInt(attr)) ||
         el.getBoundingClientRect()[dim] ||
         parseInt(el.style[dim]) ||
-        parseInt(window.getComputedStyle(el).getPropertyValue(dim));
+        parseInt(getComputedStyle(el).getPropertyValue(dim));
     return v === undefined || v === null || isNaN(Number(v)) ? 0 : v;
 }
 function getDimensions(el, w, h, clone) {
@@ -305,7 +307,7 @@ function ensureAttributeNS(el, namespace, qualifiedName, value) {
 }
 async function svgToInlinedSvg(el, options) {
     if (!(el instanceof HTMLElement || el instanceof SVGElement))
-        throw new Error(`an HTMLElement or SVGElement is required; got ${el}`);
+        throw new TypeError(`an HTMLElement or SVGElement is required; got ${el}`);
     const { left = 0, top = 0, width: w, height: h, scale = 1, backgroundColor, responsive = false, excludeCss = false, } = options || {};
     const clone = el.cloneNode(true);
     await inlineImages(clone);
@@ -346,7 +348,7 @@ function reEncode(data) {
     }));
 }
 function inlinedSvgToDataUri(el) {
-    return `data:image/svg+xml;base64,${window.btoa(reEncode(doctype + el.outerHTML))}`;
+    return `data:image/svg+xml;base64,${btoa(reEncode(doctype + el.outerHTML))}`;
 }
 async function svgToInlinedSvgDataUri(el, options) {
     const svg = await svgToInlinedSvg(el, options);
@@ -354,20 +356,20 @@ async function svgToInlinedSvgDataUri(el, options) {
 }
 async function dataUriToImage(dataUri) {
     return new Promise((resolve, reject) => {
-        const image = new Image();
-        image.onload = () => {
-            resolve(image);
+        const img = new Image();
+        img.onload = () => {
+            resolve(img);
         };
-        image.onerror = () => {
-            reject(`Error loading data uri as image:\n${window.atob(dataUri.slice(26))}Open the following link to see browser's diagnosis\n${dataUri}`);
+        img.onerror = () => {
+            reject(`Error loading data uri as image:\n${atob(dataUri.slice(26))}\nOpen the following link to see browser's diagnosis\n${dataUri}`);
         };
-        image.src = dataUri;
+        img.src = dataUri;
     });
 }
 function imageToCanvas(img, options) {
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d", options && options.canvasSettings || undefined);
-    const pixelRatio = window.devicePixelRatio || 1;
+    const pixelRatio = devicePixelRatio || 1;
     canvas.width = img.width * pixelRatio;
     canvas.height = img.height * pixelRatio;
     canvas.style.width = `${canvas.width}px`;

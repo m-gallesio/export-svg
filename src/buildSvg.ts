@@ -15,7 +15,7 @@ function getDimension(
         ((attr = el.getAttribute(dim)) && attr.match(/%$/) && parseInt(attr)) ||
         el.getBoundingClientRect()[dim] ||
         parseInt(el.style[dim]) ||
-        parseInt(window.getComputedStyle(el).getPropertyValue(dim));
+        parseInt(getComputedStyle(el).getPropertyValue(dim));
     return v === undefined || v === null || isNaN(Number(v)) ? 0 : v;
 }
 
@@ -69,7 +69,7 @@ export async function svgToInlinedSvg(
 ): Promise<SVGSVGElement> {
 
     if (!(el instanceof HTMLElement || el instanceof SVGElement))
-        throw new Error(`an HTMLElement or SVGElement is required; got ${el}`);
+        throw new TypeError(`an HTMLElement or SVGElement is required; got ${el}`);
 
     const {
         left = 0,

@@ -74,7 +74,7 @@ async function processCssMediaRule(
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
 ): Promise<boolean> {
-    if (window.matchMedia(rule.conditionText).matches) {
+    if (matchMedia(rule.conditionText).matches) {
         await processRuleList(rule.cssRules, href, el, accumulator, options);
     }
     return true;
@@ -101,7 +101,7 @@ async function processCssImportRule(
     accumulator: CssLoadingAccumulator,
     options: CssLoadingOptions
 ): Promise<boolean> {
-    if (!rule.media.length || Array.from(rule.media).some(medium => window.matchMedia(medium).matches)) {
+    if (!rule.media.length || matchMedia(rule.media.mediaText).matches) {
         try {
             const style = await styleCache.get(rule.href);
             if (style)

@@ -21,7 +21,7 @@ export function inlinedSvgToDataUri(
     this: void,
     el: SVGElement
 ): string {
-    return `data:image/svg+xml;base64,${window.btoa(reEncode(doctype + el.outerHTML))}`;
+    return `data:image/svg+xml;base64,${btoa(reEncode(doctype + el.outerHTML))}`;
 }
 
 /** Converts a SVG element to a data URI. */
@@ -40,14 +40,14 @@ export async function dataUriToImage(
     dataUri: string
 ): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
-        const image = new Image();
-        image.onload = () => {
-            resolve(image);
+        const img = new Image();
+        img.onload = () => {
+            resolve(img);
         };
-        image.onerror = () => {
-            reject(`Error loading data uri as image:\n${window.atob(dataUri.slice(26))}Open the following link to see browser's diagnosis\n${dataUri}`);
+        img.onerror = () => {
+            reject(`Error loading data uri as image:\n${atob(dataUri.slice(26))}\nOpen the following link to see browser's diagnosis\n${dataUri}`);
         };
-        image.src = dataUri;
+        img.src = dataUri;
     });
 }
 
@@ -60,7 +60,7 @@ export function imageToCanvas(
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d", options && options.canvasSettings || undefined)!;
     // this should ensure the exported image has the same size regardless of the device
-    const pixelRatio = window.devicePixelRatio || 1;
+    const pixelRatio = devicePixelRatio || 1;
 
     canvas.width = img.width * pixelRatio;
     canvas.height = img.height * pixelRatio;

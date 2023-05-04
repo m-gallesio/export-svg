@@ -57,7 +57,7 @@ export async function getStyleSheets(
 ): Promise<LoadedCssStyleSheet[]> {
     return Promise
         .all(Array.from(document.styleSheets)
-            .filter(sheet => !sheet.media || window.matchMedia(sheet.media.toString()).matches)
+            .filter(sheet => !sheet.media.length || matchMedia(sheet.media.mediaText).matches)
             .map(loadStyleSheetRules))
         .then(all => all.filter(x => x) as LoadedCssStyleSheet[]);
 }

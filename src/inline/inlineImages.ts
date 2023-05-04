@@ -3,7 +3,7 @@ import { xlinkNs } from "../namespaces";
 function isExternal(
     url: string | null
 ): url is string {
-    return Boolean(url && url.lastIndexOf("http", 0) === 0 && url.lastIndexOf(window.location.host) === -1);
+    return Boolean(url && url.lastIndexOf("http", 0) === 0 && url.lastIndexOf(location.host) === -1);
 }
 
 /** @internal */
@@ -14,11 +14,10 @@ function inlineImage(
     href: string
 ): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-        const canvas = document.createElement("canvas");
         const img = new Image();
         img.crossOrigin = "anonymous";
-        img.onerror = () => reject(new Error(`Could not load ${href}`));
         img.onload = () => {
+            const canvas = document.createElement("canvas");
             canvas.width = img.width;
             canvas.height = img.height;
             canvas.getContext("2d")!.drawImage(img, 0, 0);
@@ -26,6 +25,9 @@ function inlineImage(
             image.setAttributeNS(xlinkNs, "href", canvas.toDataURL("image/png"));
             resolve();
         };
+        img.onerror = () => {
+            reject(new Error(`Could not load ${href}`));
+        }
         img.src = href;
     })
 }
