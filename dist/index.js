@@ -263,7 +263,7 @@
     function inlineImages(el) {
         const toLoad = [];
         for (const image of el.querySelectorAll("image")) {
-            let href = image.getAttributeNS(xlinkNs, "href") || image.getAttribute("href") || "";
+            let href = image.getAttribute("href") || image.getAttributeNS(xlinkNs, "href") || "";
             if (href) {
                 if (isExternal(href)) {
                     href += (href.indexOf("?") === -1 ? "?" : "&") + "t=" + new Date().valueOf();
@@ -334,12 +334,13 @@
         }
         for (const svgContent of svg.querySelectorAll("svg")) {
             ensureAttributeNS(svgContent, xmlNs, "xmlns", svgNs);
+            ensureAttributeNS(svgContent, xmlNs, "xmlns:xlink", xlinkNs);
         }
         for (const htmlContent of svg.querySelectorAll("foreignObject > *:not(svg)")) {
             ensureAttributeNS(htmlContent, xmlNs, "xmlns", xhtmlNs);
         }
         if (!excludeCss) {
-            const css = await inlineCss(clone, options);
+            const css = await inlineCss(el, options);
             const style = createStylesheet(`<![CDATA[\n${css}\n]]>`);
             const defs = document.createElement("defs");
             defs.appendChild(style);

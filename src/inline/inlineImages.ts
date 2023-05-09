@@ -38,7 +38,7 @@ export function inlineImages(
 ): Promise<void[]> {
     const toLoad: Promise<void>[] = [];
     for (const image of el.querySelectorAll("image")) {
-        let href = image.getAttributeNS(xlinkNs, "href") || image.getAttribute("href") || "";
+        let href = image.getAttribute("href") || image.getAttributeNS(xlinkNs, "href") || "";
         if (href) {
             if (isExternal(href)) {
                 href += (href.indexOf("?") === -1 ? "?" : "&") + "t=" + new Date().valueOf();

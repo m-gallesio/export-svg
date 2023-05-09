@@ -58,6 +58,11 @@ inlineTest("When CSS styling selectors are prefixed", "#selectors-prefixed", {
         selectorRemap: s => s.replace("#selectors-prefixed ", "")
     }
 });
+inlineTest("When CSS styling selectors are prefixed (regex)", "#selectors-prefixed-regex", {
+    modifyCss: {
+        selectorRemap: s => s.replace(/#selectors-prefixed-regex/g, "")
+    }
+});
 inlineTest("Modifying the style", "#modified-style", {
     modifyCss: {
         modifyStyle: s => s.replace("green", "red")

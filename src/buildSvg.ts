@@ -105,6 +105,7 @@ export async function svgToInlinedSvg(
 
     for (const svgContent of svg.querySelectorAll("svg")) {
         ensureAttributeNS(svgContent, xmlNs, "xmlns", svgNs);
+        ensureAttributeNS(svgContent, xmlNs, "xmlns:xlink", xlinkNs);
     }
 
     for (const htmlContent of svg.querySelectorAll("foreignObject > *:not(svg)")) {
@@ -112,7 +113,8 @@ export async function svgToInlinedSvg(
     }
 
     if (!excludeCss) {
-        const css = await inlineCss(clone, options);
+        // do NOT pass the cloned element, it needs to be attached to the DOM do detect styles
+        const css = await inlineCss(el, options);
         const style = createStylesheet(`<![CDATA[\n${css}\n]]>`);
         const defs = document.createElement("defs");
         defs.appendChild(style);
