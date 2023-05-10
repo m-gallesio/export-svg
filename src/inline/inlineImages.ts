@@ -22,7 +22,8 @@ function inlineImage(
             canvas.height = img.height;
             canvas.getContext("2d")!.drawImage(img, 0, 0);
             image.removeAttribute("href");
-            image.setAttributeNS(xlinkNs, "href", canvas.toDataURL("image/png"));
+            image.removeAttributeNS(xlinkNs, "href");
+            image.setAttribute("href", canvas.toDataURL("image/png"));
             resolve();
         };
         img.onerror = () => {

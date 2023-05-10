@@ -88,10 +88,10 @@ export async function svgToInlinedSvg(
 
     const { svg, width, height } = getDimensions(el, w, h, clone);
 
-    svg.setAttribute("version", "1.1");
+    svg.removeAttribute("version");
     svg.setAttribute("viewBox", [left, top, width, height].join(" "));
     ensureAttributeNS(svg, xmlNs, "xmlns", svgNs);
-    ensureAttributeNS(svg, xmlNs, "xmlns:xlink", xlinkNs);
+    svg.removeAttribute("xmlns:xlink");
 
     if (responsive) {
         svg.removeAttribute("width");
@@ -105,7 +105,6 @@ export async function svgToInlinedSvg(
 
     for (const svgContent of svg.querySelectorAll("svg")) {
         ensureAttributeNS(svgContent, xmlNs, "xmlns", svgNs);
-        ensureAttributeNS(svgContent, xmlNs, "xmlns:xlink", xlinkNs);
     }
 
     for (const htmlContent of svg.querySelectorAll("foreignObject > *:not(svg)")) {

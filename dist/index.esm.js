@@ -242,7 +242,8 @@ function inlineImage(image, href) {
             canvas.height = img.height;
             canvas.getContext("2d").drawImage(img, 0, 0);
             image.removeAttribute("href");
-            image.setAttributeNS(xlinkNs, "href", canvas.toDataURL("image/png"));
+            image.removeAttributeNS(xlinkNs, "href");
+            image.setAttribute("href", canvas.toDataURL("image/png"));
             resolve();
         };
         img.onerror = () => {
@@ -310,10 +311,10 @@ async function svgToInlinedSvg(el, options) {
     await inlineImages(clone);
     clone.style.backgroundColor = backgroundColor || el.style.backgroundColor;
     const { svg, width, height } = getDimensions(el, w, h, clone);
-    svg.setAttribute("version", "1.1");
+    svg.removeAttribute("version");
     svg.setAttribute("viewBox", [left, top, width, height].join(" "));
     ensureAttributeNS(svg, xmlNs, "xmlns", svgNs);
-    ensureAttributeNS(svg, xmlNs, "xmlns:xlink", xlinkNs);
+    svg.removeAttribute("xmlns:xlink");
     if (responsive) {
         svg.removeAttribute("width");
         svg.removeAttribute("height");
@@ -325,7 +326,6 @@ async function svgToInlinedSvg(el, options) {
     }
     for (const svgContent of svg.querySelectorAll("svg")) {
         ensureAttributeNS(svgContent, xmlNs, "xmlns", svgNs);
-        ensureAttributeNS(svgContent, xmlNs, "xmlns:xlink", xlinkNs);
     }
     for (const htmlContent of svg.querySelectorAll("foreignObject > *:not(svg)")) {
         ensureAttributeNS(htmlContent, xmlNs, "xmlns", xhtmlNs);
