@@ -40,13 +40,8 @@ function arrayBufferToBase64(
 export function detectCssFont(
     this: void,
     cssText: string,
-    href: string | null,
-    inlineAllFonts: boolean
+    href: string | null
 ): FontInfo | null {
-    // TODO: implement this
-    if (inlineAllFonts)
-        throw new Error("The option 'inlineAllFonts' is not implemented yet.");
-
     const match = cssText.match(urlRegex);
     const url = match && match[1] || "";
     if (!url || url.match(/^data:/) || url === "about:blank")

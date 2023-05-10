@@ -5,7 +5,6 @@ export interface FontInfo {
 }
 export interface FontOptions {
     fonts?: FontInfo[];
-    inlineAllFonts?: boolean;
 }
 export interface CssOptions extends FontOptions {
     excludeUnusedCss?: boolean;

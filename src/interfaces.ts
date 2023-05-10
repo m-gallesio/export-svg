@@ -10,12 +10,6 @@ export interface FontOptions {
      * Omitting this option defaults to auto-detecting font rules.
      */
     fonts?: FontInfo[];
-    /**
-     * WARNING: NOT IMPLEMENTED YET.
-     * Inlines all fonts included in the @font-face src declaration instead of only the first.
-     * This is off by default to save bandwidth.
-     */
-    inlineAllFonts?: boolean;
 }
 
 export interface CssOptions extends FontOptions {

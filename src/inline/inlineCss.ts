@@ -9,7 +9,6 @@ interface CssLoadingAccumulator {
 
 interface CssFontLoadingOptions {
     detectFonts: boolean;
-    inlineAllFonts: boolean;
 }
 
 interface CssLoadingOptions extends CssFontLoadingOptions {
@@ -58,7 +57,7 @@ function processCssFontFaceRule(
     options: CssFontLoadingOptions
 ): boolean {
     if (options.detectFonts) {
-        const font = detectCssFont(rule.cssText, href, options.inlineAllFonts);
+        const font = detectCssFont(rule.cssText, href);
         if (font) {
             fontList.push(font);
         }
@@ -179,7 +178,6 @@ export async function inlineCss(
     const {
         modifyCss,
         fonts,
-        inlineAllFonts = false,
         excludeUnusedCss = false
     } = options || {};
 
@@ -192,7 +190,6 @@ export async function inlineCss(
         generateCss: getGenerateCss(modifyCss),
         excludeUnusedCss,
         detectFonts: !fonts,
-        inlineAllFonts
     };
 
     const styles = await getStyleSheets();

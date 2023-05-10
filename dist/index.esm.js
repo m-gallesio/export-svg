@@ -53,9 +53,7 @@ function arrayBufferToBase64(buffer) {
         binary += String.fromCharCode(bytes[i]);
     return btoa(binary);
 }
-function detectCssFont(cssText, href, inlineAllFonts) {
-    if (inlineAllFonts)
-        throw new Error("The option 'inlineAllFonts' is not implemented yet.");
+function detectCssFont(cssText, href) {
     const match = cssText.match(urlRegex);
     const url = match && match[1] || "";
     if (!url || url.match(/^data:/) || url === "about:blank")
@@ -145,7 +143,7 @@ function processCssRule(rule, el, generateCss, css) {
 }
 function processCssFontFaceRule(rule, href, fontList, options) {
     if (options.detectFonts) {
-        const font = detectCssFont(rule.cssText, href, options.inlineAllFonts);
+        const font = detectCssFont(rule.cssText, href);
         if (font) {
             fontList.push(font);
         }
@@ -213,7 +211,7 @@ function getGenerateCss(modifyCss) {
     return defaultGenerateCss;
 }
 async function inlineCss(el, options) {
-    const { modifyCss, fonts, inlineAllFonts = false, excludeUnusedCss = false } = options || {};
+    const { modifyCss, fonts, excludeUnusedCss = false } = options || {};
     const acc = {
         css: [],
         fonts: fonts || []
@@ -222,7 +220,6 @@ async function inlineCss(el, options) {
         generateCss: getGenerateCss(modifyCss),
         excludeUnusedCss,
         detectFonts: !fonts,
-        inlineAllFonts
     };
     const styles = await getStyleSheets();
     for (const { rules, href } of styles) {
