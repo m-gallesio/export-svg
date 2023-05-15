@@ -16,6 +16,7 @@ Essentially, a browser compatible with [ES2017/ES8](https://caniuse.com/sr_es8) 
 TODO:
 - handle multiple font urls (under a flag since it costs bandwidth)
 - review responsive flag
+- consider providing a flag to output the deprecated xlink attributes
 
 # Example usage
 
@@ -130,7 +131,7 @@ const dataUri = await svgToInlinedSvgDataUri(svg);
 const image = await dataUriAsImage(dataUri);
 const canvas = imageToCanvas(image);
 
-// do something with the canvas
+// do something with the canvas here, then:
 
 const pngUri = canvasToRasterDataUri(canvas);
 download("myEditedImage.png", pngUri);
